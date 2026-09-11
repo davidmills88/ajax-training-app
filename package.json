@@ -1,0 +1,19 @@
+{
+  "name": "ajax-training",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @ajax/api",
+    "dev:api": "npm run dev -w @ajax/api",
+    "dev:mobile": "npm run start -w @ajax/mobile",
+    "dev:web": "npm run web -w @ajax/mobile",
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Ajax Training",
+    "slug": "ajax-training",
+    "scheme": "ajax-training",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ajaxfitness.training"
+    },
+    "android": {
+      "package": "com.ajaxfitness.training"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "replace-when-eas-is-configured"
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@ajax/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ajax/shared": "*",
+    "expo": "~53.0.22",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-web": "~0.20.0",
+    "@expo/metro-runtime": "~5.0.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.10",
+    "@types/react": "~19.0.10",
+    "typescript": "^5.8.2"
+  }
+}
