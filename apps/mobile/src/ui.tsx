@@ -9,6 +9,7 @@ import {
   type TextInputProps,
 } from "react-native";
 import { colors, space, type } from "./theme";
+import { preserveSpaces } from "./webStyles";
 
 export function Screen({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   return (
@@ -22,19 +23,19 @@ export function Screen({ children, footer }: { children: ReactNode; footer?: Rea
 }
 
 export function Kicker({ children }: { children: ReactNode }) {
-  return <Text style={type.kicker}>{children}</Text>;
+  return <Text style={preserveSpaces(type.kicker)}>{children}</Text>;
 }
 
 export function Title({ children }: { children: ReactNode }) {
-  return <Text style={[type.title, styles.title]}>{children}</Text>;
+  return <Text style={preserveSpaces({ ...type.title, ...styles.title })}>{children}</Text>;
 }
 
 export function Body({ children }: { children: ReactNode }) {
-  return <Text style={[type.body, styles.block]}>{children}</Text>;
+  return <Text style={preserveSpaces({ ...type.body, ...styles.block })}>{children}</Text>;
 }
 
 export function Muted({ children }: { children: ReactNode }) {
-  return <Text style={[type.muted, styles.block]}>{children}</Text>;
+  return <Text style={preserveSpaces({ ...type.muted, ...styles.block })}>{children}</Text>;
 }
 
 export function FieldLabel({ children }: { children: ReactNode }) {
@@ -73,7 +74,9 @@ export function Button({
         disabled && styles.buttonDisabled,
       ]}
     >
-      <Text style={[styles.buttonLabel, variant === "ghost" && styles.buttonGhostLabel]}>{label}</Text>
+      <Text style={preserveSpaces({ ...styles.buttonLabel, ...(variant === "ghost" ? styles.buttonGhostLabel : {}) })}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

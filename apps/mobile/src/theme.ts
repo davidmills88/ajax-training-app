@@ -20,7 +20,7 @@ export const space = {
 };
 
 export const type = {
-  kicker: { fontSize: 13, letterSpacing: 1.2, textTransform: "uppercase" as const, color: colors.accent },
+  kicker: { fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase" as const, color: colors.accent },
   title: { fontSize: 28, lineHeight: 34, fontWeight: "600" as const, color: colors.text },
   body: { fontSize: 16, lineHeight: 24, color: colors.text },
   muted: { fontSize: 15, lineHeight: 22, color: colors.muted },

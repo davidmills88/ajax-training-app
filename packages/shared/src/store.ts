@@ -63,6 +63,7 @@ export const DEFAULT_AJAX_ROSTER: Omit<RosterEntry, "id" | "tenantId">[] = [
   { email: "david@ajaxgym.com", fullName: "David Mills", status: "active" },
   { email: "seth@ajaxgym.com", fullName: "Seth", status: "active" },
   { email: "member@ajax.local", fullName: "Demo Member", status: "active" },
+  { email: "playwright@ajax.local", fullName: "Playwright Guest", status: "active" },
 ];
 
 export class InMemoryAjaxStore {

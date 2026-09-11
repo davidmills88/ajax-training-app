@@ -48,7 +48,7 @@ npm run dev:mobile
 npm run dev:web
 ```
 
-Sign in with `member@ajax.local` (or another seeded roster email). In mock mode the API does not send email; it returns a session immediately.
+Sign in with `member@ajax.local` (or another seeded roster email: `david@ajaxgym.com`, `seth@ajaxgym.com`, `playwright@ajax.local`). In mock mode the API does not send email; it returns a session immediately.
 
 ### Optional live path (Supabase + Postgres)
 

@@ -64,7 +64,7 @@ export function LoginScreen({
       <ErrorText>{error}</ErrorText>
       <ErrorText>{appleNote}</ErrorText>
       <Banner>
-        Manual roster for M0 (no Wellyx): david@ajaxgym.com, seth@ajaxgym.com, member@ajax.local
+        Manual roster for M0 (no Wellyx): david@ajaxgym.com, seth@ajaxgym.com, member@ajax.local, playwright@ajax.local
       </Banner>
       <View>
         <Muted>Health data and SMS consent are not part of this step. Those come later.</Muted>
