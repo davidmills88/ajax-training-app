@@ -10,6 +10,20 @@ M0 stack (locked working baseline): Expo (React Native) iOS-first · Hono API ·
 
 This initial commit unblocked Cursor cloud / Slack agents (empty repos cannot start agents). This tree is the real M0 scaffold: auth, manual Ajax roster, account/privacy consent, and the full 9-section onboarding → Client Summary.
 
+## Ownership & intended orgs
+
+Lily (COS) owns end-to-end product and architecture decisions for this app. David logins and money-touching steps come later — do not wait on them to keep M0 moving.
+
+| Surface | Intended owner account | M0 status |
+| --- | --- | --- |
+| GitHub | `davidmills88` / Ajax Fitness owner | This repo |
+| Supabase (Auth + Postgres) | Same Ajax Fitness owner account | Preferred live path. **Not required for M0.** Leave env blank and use the in-memory mock. |
+| API host | Vercel or Fly, same owner | Documented target. Local `npm run dev:api` is enough for M0. |
+| Apple Developer | `david@ajaxgym.com` | Planned for TestFlight / Sign in with Apple. **Do not block M0** on creating the team. Apple Sign-In stays stubbed. |
+| Expo / EAS | `david@ajaxgym.com` Expo account | Planned for iOS builds. **Do not block M0** on creating it. Expo Go / web + mock auth is the default. |
+
+No live credentials belong in this repo. `.env.example` lists names only; copy to `.env` locally when a project exists.
+
 ## What M0 is
 
 - **Monorepo:** `apps/mobile` (Expo / TypeScript, iOS-first), `apps/api` (Hono / TypeScript), `packages/shared` (onboarding + roster domain), `supabase/` (Postgres schema with `tenant_id` + RLS).
@@ -52,13 +66,15 @@ Sign in with `member@ajax.local` (or another seeded roster email: `david@ajaxgym
 
 ### Optional live path (Supabase + Postgres)
 
-1. Create a Supabase project.
+Create the Supabase project under the Ajax Fitness owner (`davidmills88` / gym owner), not a personal throwaway. Deploy the Hono API to Vercel or Fly under that same owner when you leave local-only.
+
+1. Create the Supabase project (Auth + Postgres).
 2. Run `supabase/migrations/0001_init.sql` then `supabase/seed.sql`.
 3. Set `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in `.env`.
 4. Set `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` and `EXPO_PUBLIC_USE_MOCK=0` for the app.
-5. Enable email magic links in Supabase Auth. Apple Sign-In stays stubbed.
+5. Enable email magic links in Supabase Auth. Apple Sign-In stays stubbed until the `david@ajaxgym.com` Apple Developer team exists.
 
-If `DATABASE_URL` is set but Postgres is down, the API logs a warning and stays on the in-memory mock.
+If `DATABASE_URL` is set but Postgres is down, the API logs a warning and stays on the in-memory mock. Missing Expo / Apple accounts do not stop local or web runs.
 
 ### Tests
 
