@@ -22,7 +22,7 @@ Lily (COS) owns end-to-end product and architecture decisions for this app. Davi
 | Apple Developer | `david@ajaxgym.com` | Planned for TestFlight / Sign in with Apple. **Do not block M0** on creating the team. Apple Sign-In stays stubbed. |
 | Expo / EAS | `david@ajaxgym.com` Expo account | Planned for iOS builds. **Do not block M0** on creating it. Expo Go / web + mock auth is the default. |
 
-No live credentials belong in this repo. `.env.example` lists names only; copy to `.env` locally when a project exists.
+No live credentials belong in this repo. `.env.example` files use labeled placeholders only; copy to `.env` locally when a project exists. See [docs/supabase-setup.md](docs/supabase-setup.md).
 
 ## What M0 is
 
@@ -46,6 +46,7 @@ Requires Node 20+.
 
 ```bash
 cp .env.example .env
+# Live wiring: copy apps/api/.env.example and apps/mobile/.env.example instead.
 npm install
 ```
 
@@ -66,15 +67,14 @@ Sign in with `member@ajax.local` (or another seeded roster email: `david@ajaxgym
 
 ### Optional live path (Supabase + Postgres)
 
-Create the Supabase project under the Ajax Fitness owner (`davidmills88` / gym owner), not a personal throwaway. Deploy the Hono API to Vercel or Fly under that same owner when you leave local-only.
+Create a project named **`ajax-training-app`** under the Ajax Fitness owner. Full steps, env map, and the service_role warning: [docs/supabase-setup.md](docs/supabase-setup.md).
 
-1. Create the Supabase project (Auth + Postgres).
-2. Run `supabase/migrations/0001_init.sql` then `supabase/seed.sql`.
-3. Set `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in `.env`.
-4. Set `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` and `EXPO_PUBLIC_USE_MOCK=0` for the app.
-5. Enable email magic links in Supabase Auth. Apple Sign-In stays stubbed until the `david@ajaxgym.com` Apple Developer team exists.
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
+```
 
-If `DATABASE_URL` is set but Postgres is down, the API logs a warning and stays on the in-memory mock. Missing Expo / Apple accounts do not stop local or web runs.
+Paste URL + anon only. Never commit `SUPABASE_SERVICE_ROLE_KEY`. If `DATABASE_URL` is set but Postgres is down, the API stays on the in-memory mock.
 
 ### Tests
 
