@@ -39,7 +39,7 @@ export function Muted({ children }: { children: ReactNode }) {
 }
 
 export function FieldLabel({ children }: { children: ReactNode }) {
-  return <Text style={styles.label}>{children}</Text>;
+  return <Text style={preserveSpaces(styles.label)}>{children}</Text>;
 }
 
 export function Input(props: TextInputProps) {
@@ -111,10 +111,10 @@ export function ListRow({
   return (
     <Pressable onPress={onPress} style={[styles.row, done && styles.rowDone]}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.rowTitle}>{title}</Text>
-        <Text style={styles.rowMeta}>{meta}</Text>
+        <Text style={preserveSpaces(styles.rowTitle)}>{title}</Text>
+        <Text style={preserveSpaces(styles.rowMeta)}>{meta}</Text>
       </View>
-      <Text style={styles.rowMark}>{done ? "Done" : "Open"}</Text>
+      <Text style={preserveSpaces(styles.rowMark)}>{done ? "Done" : "Open"}</Text>
     </Pressable>
   );
 }
