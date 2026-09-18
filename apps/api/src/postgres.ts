@@ -4,21 +4,32 @@ import {
   buildClientSummary,
   decodeMockToken,
   encodeMockToken,
+  isCoachRole,
   nextUnconfirmed,
   TENANT_SLUG_AJAX,
   validateConsent,
+  validateCreateBlock,
   validateSectionAnswers,
   isOnboardingSectionId,
   type ClientSummary,
   type ConsentQuestionnaire,
   type ConsentRecord,
+  type CreateBlockInput,
+  type LogWorkoutInput,
   type MePayload,
   type OnboardingAnswers,
   type OnboardingProfile,
   type OnboardingSectionId,
+  type Program,
+  type ProgramAssignment,
   type RosterEntry,
   type Session,
   type SessionUser,
+  type TrainingHome,
+  type Workout,
+  type WorkoutDetail,
+  type WorkoutLog,
+  type WorkoutSegment,
 } from "@ajax/shared";
 import { nextStep } from "@ajax/shared";
 import pg from "pg";
@@ -223,6 +234,228 @@ export class PostgresAjaxStore {
     return this.persistProfile(profile);
   }
 
+  async createBlock(actor: SessionUser, input: CreateBlockInput): Promise<Program> {
+    assertCoach(actor);
+    const errors = validateCreateBlock(input);
+    if (errors.length) throw new AjaxStoreError("invalid_block", errors.join(" "));
+    const durationWeeks = input.durationWeeks ?? 6;
+    const inserted = await this.pool.query<Program>(
+      `insert into programs (tenant_id, title, notes, duration_weeks)
+       values ($1, $2, $3, $4)
+       returning id, tenant_id as "tenantId", title, notes,
+                 duration_weeks as "durationWeeks", created_at as "createdAt"`,
+      [this.tenantId, input.title.trim(), input.notes?.trim() ?? "", durationWeeks],
+    );
+    const program = inserted.rows[0];
+    for (const [index, row] of input.workouts.entries()) {
+      await this.pool.query(
+        `insert into workouts (tenant_id, program_id, week, day, sort_order, title, notes, video_url, segments)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          this.tenantId,
+          program.id,
+          row.week,
+          row.day,
+          row.sortOrder ?? index,
+          row.title.trim(),
+          row.notes?.trim() ?? "",
+          row.videoUrl?.trim() || null,
+          JSON.stringify(normalizeSegments(row.segments)),
+        ],
+      );
+    }
+    return program;
+  }
+
+  async assignBlock(actor: SessionUser, programId: string, email: string): Promise<ProgramAssignment> {
+    assertCoach(actor);
+    const program = await this.findProgram(programId);
+    if (!program) throw new AjaxStoreError("not_found", "That block does not exist.");
+    const roster = await this.findRoster(email);
+    if (!roster) throw new AjaxStoreError("not_on_roster", "This email is not on the Ajax member list yet.");
+    if (roster.status !== "active") throw new AjaxStoreError("inactive_roster", "This membership is not active.");
+
+    await this.pool.query(
+      `update program_assignments
+       set status = 'inactive'
+       where tenant_id = $1 and member_email = $2 and status = 'active'`,
+      [this.tenantId, roster.email],
+    );
+
+    const existingUser = await this.pool.query<{ id: string }>(
+      `select id from app_users where tenant_id = $1 and email = $2`,
+      [this.tenantId, roster.email],
+    );
+
+    const inserted = await this.pool.query<ProgramAssignment>(
+      `insert into program_assignments (tenant_id, program_id, member_email, user_id, status)
+       values ($1, $2, $3, $4, 'active')
+       returning id, tenant_id as "tenantId", program_id as "programId",
+                 member_email as "memberEmail", user_id as "userId",
+                 status, assigned_at as "assignedAt"`,
+      [this.tenantId, program.id, roster.email, existingUser.rows[0]?.id ?? null],
+    );
+    return inserted.rows[0];
+  }
+
+  async listBlocks(actor: SessionUser): Promise<Program[]> {
+    assertCoach(actor);
+    const result = await this.pool.query<Program>(
+      `select id, tenant_id as "tenantId", title, notes,
+              duration_weeks as "durationWeeks", created_at as "createdAt"
+       from programs
+       where tenant_id = $1
+       order by created_at`,
+      [this.tenantId],
+    );
+    return result.rows;
+  }
+
+  async getBlock(
+    actor: SessionUser,
+    programId: string,
+  ): Promise<{ program: Program; workouts: Workout[]; assignments: ProgramAssignment[] }> {
+    assertCoach(actor);
+    const program = await this.findProgram(programId);
+    if (!program) throw new AjaxStoreError("not_found", "That block does not exist.");
+    const [workouts, assignments] = await Promise.all([
+      this.workoutsForProgram(program.id),
+      this.assignmentsForProgram(program.id),
+    ]);
+    return { program, workouts, assignments };
+  }
+
+  async getTrainingHome(user: SessionUser): Promise<TrainingHome> {
+    const assignment = await this.activeAssignmentFor(user.email);
+    if (!assignment) return { assignment: null, program: null, workouts: [] };
+    if (assignment.userId !== user.id) {
+      await this.pool.query(
+        `update program_assignments set user_id = $3 where id = $1 and tenant_id = $2`,
+        [assignment.id, this.tenantId, user.id],
+      );
+      assignment.userId = user.id;
+    }
+    const program = (await this.findProgram(assignment.programId)) ?? null;
+    const workouts = await this.workoutsForProgram(assignment.programId);
+    const logs = await this.logsForAssignment(user.id, assignment.id);
+    return {
+      assignment,
+      program,
+      workouts: workouts.map((workout) => ({ ...workout, log: logs.get(workout.id) ?? null })),
+    };
+  }
+
+  async getWorkoutDetail(user: SessionUser, workoutId: string): Promise<WorkoutDetail> {
+    const home = await this.getTrainingHome(user);
+    if (!home.assignment || !home.program) {
+      throw new AjaxStoreError("not_found", "No block is assigned yet.");
+    }
+    const workout = home.workouts.find((row) => row.id === workoutId);
+    if (!workout) throw new AjaxStoreError("not_found", "That workout is not on your current block.");
+    return {
+      assignment: home.assignment,
+      program: home.program,
+      workout,
+      log: workout.log,
+    };
+  }
+
+  async logWorkout(user: SessionUser, workoutId: string, input: LogWorkoutInput): Promise<WorkoutLog> {
+    const detail = await this.getWorkoutDetail(user, workoutId);
+    const existing = detail.log;
+    let completedAt = existing?.completedAt ?? null;
+    if (input.completed === true) completedAt = new Date().toISOString();
+    if (input.completed === false) completedAt = null;
+    const weight = normalizeMetric(input.weight, existing?.weight ?? null);
+    const reps = normalizeMetric(input.reps, existing?.reps ?? null);
+    const score = normalizeMetric(input.score, existing?.score ?? null);
+    const notes = input.notes !== undefined ? String(input.notes) : existing?.notes ?? "";
+
+    const result = await this.pool.query<WorkoutLog>(
+      `insert into workout_logs (
+         tenant_id, user_id, workout_id, assignment_id, weight, reps, score, notes, completed_at
+       )
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       on conflict (tenant_id, user_id, workout_id, assignment_id)
+       do update set
+         weight = excluded.weight,
+         reps = excluded.reps,
+         score = excluded.score,
+         notes = excluded.notes,
+         completed_at = excluded.completed_at
+       returning id, tenant_id as "tenantId", user_id as "userId",
+                 workout_id as "workoutId", assignment_id as "assignmentId",
+                 weight, reps, score, notes,
+                 completed_at as "completedAt", created_at as "createdAt"`,
+      [this.tenantId, user.id, workoutId, detail.assignment.id, weight, reps, score, notes, completedAt],
+    );
+    return result.rows[0];
+  }
+
+  private async findProgram(programId: string): Promise<Program | undefined> {
+    const result = await this.pool.query<Program>(
+      `select id, tenant_id as "tenantId", title, notes,
+              duration_weeks as "durationWeeks", created_at as "createdAt"
+       from programs
+       where tenant_id = $1 and id = $2`,
+      [this.tenantId, programId],
+    );
+    return result.rows[0];
+  }
+
+  private async workoutsForProgram(programId: string): Promise<Workout[]> {
+    const result = await this.pool.query<Workout>(
+      `select id, tenant_id as "tenantId", program_id as "programId",
+              week, day, sort_order as "sortOrder", title, notes,
+              video_url as "videoUrl", segments
+       from workouts
+       where tenant_id = $1 and program_id = $2
+       order by week, day, sort_order`,
+      [this.tenantId, programId],
+    );
+    return result.rows.map((row) => ({ ...row, segments: Array.isArray(row.segments) ? row.segments : [] }));
+  }
+
+  private async assignmentsForProgram(programId: string): Promise<ProgramAssignment[]> {
+    const result = await this.pool.query<ProgramAssignment>(
+      `select id, tenant_id as "tenantId", program_id as "programId",
+              member_email as "memberEmail", user_id as "userId",
+              status, assigned_at as "assignedAt"
+       from program_assignments
+       where tenant_id = $1 and program_id = $2
+       order by assigned_at`,
+      [this.tenantId, programId],
+    );
+    return result.rows;
+  }
+
+  private async activeAssignmentFor(email: string): Promise<ProgramAssignment | undefined> {
+    const result = await this.pool.query<ProgramAssignment>(
+      `select id, tenant_id as "tenantId", program_id as "programId",
+              member_email as "memberEmail", user_id as "userId",
+              status, assigned_at as "assignedAt"
+       from program_assignments
+       where tenant_id = $1 and member_email = $2 and status = 'active'
+       order by assigned_at desc
+       limit 1`,
+      [this.tenantId, normalizeEmail(email)],
+    );
+    return result.rows[0];
+  }
+
+  private async logsForAssignment(userId: string, assignmentId: string): Promise<Map<string, WorkoutLog>> {
+    const result = await this.pool.query<WorkoutLog>(
+      `select id, tenant_id as "tenantId", user_id as "userId",
+              workout_id as "workoutId", assignment_id as "assignmentId",
+              weight, reps, score, notes,
+              completed_at as "completedAt", created_at as "createdAt"
+       from workout_logs
+       where tenant_id = $1 and user_id = $2 and assignment_id = $3`,
+      [this.tenantId, userId, assignmentId],
+    );
+    return new Map(result.rows.map((row) => [row.workoutId, row]));
+  }
+
   private async persistProfile(profile: OnboardingProfile): Promise<OnboardingProfile> {
     const result = await this.pool.query<OnboardingProfile>(
       `update onboarding_profiles
@@ -259,6 +492,31 @@ function normalizeProfile(row: OnboardingProfile): OnboardingProfile {
     confirmedSections: (row.confirmedSections ?? []).map(Number) as OnboardingSectionId[],
     sections: row.sections ?? {},
   };
+}
+
+function assertCoach(actor: SessionUser) {
+  if (!isCoachRole(actor.role)) {
+    throw new AjaxStoreError("forbidden", "Only a coach or owner can create and assign blocks.");
+  }
+}
+
+function normalizeSegments(segments: WorkoutSegment[] | undefined): WorkoutSegment[] {
+  if (!Array.isArray(segments)) return [];
+  return segments
+    .filter((row) => row?.name?.trim())
+    .map((row) => ({
+      name: row.name.trim(),
+      prescription: row.prescription?.trim() || undefined,
+      notes: row.notes?.trim() || undefined,
+      videoUrl: row.videoUrl?.trim() || null,
+    }));
+}
+
+function normalizeMetric(value: string | null | undefined, fallback: string | null): string | null {
+  if (value === undefined) return fallback;
+  if (value === null) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
 }
 
 export async function tryCreatePostgresStore(): Promise<PostgresAjaxStore | null> {

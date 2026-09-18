@@ -19,10 +19,11 @@ From a machine that can reach the project database:
 ```bash
 # SQL editor in the dashboard, or:
 psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
+psql "$DATABASE_URL" -f supabase/migrations/0002_training.sql
 psql "$DATABASE_URL" -f supabase/seed.sql
 ```
 
-`0001_init.sql` creates tenants, roster, users, consents, onboarding, and RLS. `seed.sql` adds the M0 Ajax roster (`david@ajaxgym.com`, `seth@ajaxgym.com`, `member@ajax.local`, `playwright@ajax.local`).
+`0001_init.sql` creates tenants, roster, users, consents, onboarding, and RLS. `0002_training.sql` adds programs (blocks), workouts, assignments, workout_logs, and RLS. `seed.sql` adds the Ajax roster (`david@ajaxgym.com`, `seth@ajaxgym.com`, `member@ajax.local`, `playwright@ajax.local`) and assigns the demo 6-week block to `member@ajax.local`.
 
 ## 3. Paste URL + anon into env
 

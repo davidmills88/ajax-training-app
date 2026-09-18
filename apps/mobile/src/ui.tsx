@@ -97,6 +97,28 @@ export function Chip({
   );
 }
 
+export function ListRow({
+  title,
+  meta,
+  done,
+  onPress,
+}: {
+  title: string;
+  meta: string;
+  done?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={[styles.row, done && styles.rowDone]}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowMeta}>{meta}</Text>
+      </View>
+      <Text style={styles.rowMark}>{done ? "Done" : "Open"}</Text>
+    </Pressable>
+  );
+}
+
 export function Banner({ children }: { children: ReactNode }) {
   return (
     <View style={styles.banner}>
@@ -163,6 +185,20 @@ const styles = StyleSheet.create({
   chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipLabel: { color: colors.text, fontSize: 14 },
   chipLabelSelected: { color: colors.bg, fontWeight: "700" },
+  row: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  rowDone: { borderColor: colors.accentDim },
+  rowTitle: { color: colors.text, fontSize: 16, fontWeight: "600" },
+  rowMeta: { color: colors.muted, fontSize: 13, marginTop: 4 },
+  rowMark: { color: colors.accent, fontSize: 13, fontWeight: "600" },
   banner: {
     backgroundColor: colors.surfaceRaised,
     borderRadius: 12,

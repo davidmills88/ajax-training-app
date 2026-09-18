@@ -67,6 +67,25 @@ describe("InMemoryAjaxStore", () => {
     assert.equal(store.getMe(session.user).onboarding?.clientSummary?.goals, "Edited: ski durability and longevity");
   });
 
+  it("seeds a 6-week block for the demo member and accepts a result log", () => {
+    const store = new InMemoryAjaxStore();
+    const member = store.issueSession("member@ajax.local").user;
+    const home = store.getTrainingHome(member);
+    assert.equal(home.program?.title, "Ajax Foundation — 6 weeks");
+    assert.equal(home.workouts.length, 18);
+    const first = home.workouts[0];
+    const log = store.logWorkout(member, first.id, {
+      weight: "28",
+      reps: "8",
+      score: "smooth",
+      notes: "Left hip a little tight.",
+      completed: true,
+    });
+    assert.equal(log.weight, "28");
+    assert.ok(log.completedAt);
+    assert.equal(store.getWorkoutDetail(member, first.id).log?.notes, "Left hip a little tight.");
+  });
+
   it("builds a client summary from the nine sections", () => {
     const sections = Object.fromEntries(ONBOARDING_SECTIONS.map((s) => [s.id, filledSection(s.id)]));
     const summary = buildClientSummary(sections as never);

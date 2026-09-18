@@ -35,8 +35,8 @@ export function SummaryScreen({
       <Kicker>Client summary</Kicker>
       <Title>Your brief, in one place.</Title>
       <Body>
-        This is the format the programming engine will read later. You can edit it now. After you finish, M0 stops here
-        — the first automated block is not in this build.
+        This is the brief your coach reads before they assign a block. Edit anything that is off, then continue to your
+        first assigned week.
       </Body>
       {CLIENT_SUMMARY_FIELDS.map((field) => (
         <FieldBlock

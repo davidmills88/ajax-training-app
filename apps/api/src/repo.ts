@@ -3,12 +3,20 @@ import {
   type ClientSummary,
   type ConsentQuestionnaire,
   type ConsentRecord,
+  type CreateBlockInput,
+  type LogWorkoutInput,
   type MePayload,
   type OnboardingAnswers,
   type OnboardingProfile,
+  type Program,
+  type ProgramAssignment,
   type RosterEntry,
   type Session,
   type SessionUser,
+  type TrainingHome,
+  type Workout,
+  type WorkoutDetail,
+  type WorkoutLog,
 } from "@ajax/shared";
 import { PostgresAjaxStore } from "./postgres.js";
 
@@ -26,6 +34,16 @@ export type AjaxRepo = {
   confirmSection(user: SessionUser, sectionId: number): Promise<OnboardingProfile>;
   updateSummary(user: SessionUser, summary: ClientSummary): Promise<OnboardingProfile>;
   completeOnboarding(user: SessionUser): Promise<OnboardingProfile>;
+  createBlock(actor: SessionUser, input: CreateBlockInput): Promise<Program>;
+  assignBlock(actor: SessionUser, programId: string, email: string): Promise<ProgramAssignment>;
+  listBlocks(actor: SessionUser): Promise<Program[]>;
+  getBlock(
+    actor: SessionUser,
+    programId: string,
+  ): Promise<{ program: Program; workouts: Workout[]; assignments: ProgramAssignment[] }>;
+  getTrainingHome(user: SessionUser): Promise<TrainingHome>;
+  getWorkoutDetail(user: SessionUser, workoutId: string): Promise<WorkoutDetail>;
+  logWorkout(user: SessionUser, workoutId: string, input: LogWorkoutInput): Promise<WorkoutLog>;
 };
 
 export function memoryRepo(store = new InMemoryAjaxStore()): AjaxRepo {
@@ -43,6 +61,13 @@ export function memoryRepo(store = new InMemoryAjaxStore()): AjaxRepo {
     confirmSection: async (user, sectionId) => store.confirmSection(user, sectionId),
     updateSummary: async (user, summary) => store.updateSummary(user, summary),
     completeOnboarding: async (user) => store.completeOnboarding(user),
+    createBlock: async (actor, input) => store.createBlock(actor, input),
+    assignBlock: async (actor, programId, email) => store.assignBlock(actor, programId, email),
+    listBlocks: async (actor) => store.listBlocks(actor),
+    getBlock: async (actor, programId) => store.getBlock(actor, programId),
+    getTrainingHome: async (user) => store.getTrainingHome(user),
+    getWorkoutDetail: async (user, workoutId) => store.getWorkoutDetail(user, workoutId),
+    logWorkout: async (user, workoutId, input) => store.logWorkout(user, workoutId, input),
   };
 }
 
@@ -61,5 +86,12 @@ export function postgresRepo(store: PostgresAjaxStore): AjaxRepo {
     confirmSection: (user, sectionId) => store.confirmSection(user, sectionId),
     updateSummary: (user, summary) => store.updateSummary(user, summary),
     completeOnboarding: (user) => store.completeOnboarding(user),
+    createBlock: (actor, input) => store.createBlock(actor, input),
+    assignBlock: (actor, programId, email) => store.assignBlock(actor, programId, email),
+    listBlocks: (actor) => store.listBlocks(actor),
+    getBlock: (actor, programId) => store.getBlock(actor, programId),
+    getTrainingHome: (user) => store.getTrainingHome(user),
+    getWorkoutDetail: (user, workoutId) => store.getWorkoutDetail(user, workoutId),
+    logWorkout: (user, workoutId, input) => store.logWorkout(user, workoutId, input),
   };
 }

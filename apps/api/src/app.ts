@@ -1,11 +1,16 @@
 import {
   AjaxStoreError,
+  AJAX_TENANT_ID,
   CONSENT_COPY,
+  isCoachRole,
   isOnboardingSectionId,
   ONBOARDING_SECTIONS,
   recapSection,
   type ConsentQuestionnaire,
+  type CreateBlockInput,
+  type LogWorkoutInput,
   type OnboardingAnswers,
+  type SessionUser,
 } from "@ajax/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -27,7 +32,8 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
 
   app.onError((err, c) => {
     if (err instanceof AjaxStoreError) {
-      const status = err.code === "unauthorized" ? 401 : err.code === "not_found" ? 404 : 400;
+      const status =
+        err.code === "unauthorized" ? 401 : err.code === "forbidden" ? 403 : err.code === "not_found" ? 404 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }
     console.error(err);
@@ -39,6 +45,26 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
     const token = header.startsWith("Bearer ") ? header.slice(7) : "";
     if (!token) throw new AjaxStoreError("unauthorized", "Sign in to continue.");
     return store.userFromToken(token);
+  }
+
+  async function requireCoach(c: { req: { header: (name: string) => string | undefined } }) {
+    const serviceKey = process.env.COACH_API_KEY;
+    const provided = c.req.header("X-Coach-Key") ?? "";
+    if (serviceKey && provided && provided === serviceKey) {
+      const coach: SessionUser = {
+        id: "svc_coach",
+        tenantId: store.tenantId || AJAX_TENANT_ID,
+        email: "pace@ajax.local",
+        fullName: "Pace",
+        role: "owner",
+      };
+      return coach;
+    }
+    const user = await requireUser(c);
+    if (!isCoachRole(user.role)) {
+      throw new AjaxStoreError("forbidden", "Only a coach or owner can create and assign blocks.");
+    }
+    return user;
   }
 
   app.get("/health", (c) =>
@@ -206,6 +232,64 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
     const user = await requireUser(c);
     const profile = await store.completeOnboarding(user);
     return c.json({ profile, me: await store.getMe(user) });
+  });
+
+  app.get("/coach/blocks", async (c) => {
+    const coach = await requireCoach(c);
+    const blocks = await store.listBlocks(coach);
+    return c.json({ blocks });
+  });
+
+  app.post("/coach/blocks", async (c) => {
+    const coach = await requireCoach(c);
+    const body = await c.req.json<CreateBlockInput>().catch(() => ({ title: "", workouts: [] }));
+    const program = await store.createBlock(coach, body);
+    const detail = await store.getBlock(coach, program.id);
+    return c.json({ program: detail.program, workouts: detail.workouts }, 201);
+  });
+
+  app.get("/coach/blocks/:id", async (c) => {
+    const coach = await requireCoach(c);
+    const detail = await store.getBlock(coach, c.req.param("id"));
+    return c.json(detail);
+  });
+
+  app.post("/coach/blocks/:id/assign", async (c) => {
+    const coach = await requireCoach(c);
+    const body = await c.req.json<{ email?: string }>().catch(() => ({ email: "" }));
+    const email = body.email ?? "";
+    if (!email.includes("@")) {
+      return c.json({ error: "invalid_email", message: "Enter the member's roster email." }, 400);
+    }
+    const assignment = await store.assignBlock(coach, c.req.param("id"), email);
+    return c.json({ assignment });
+  });
+
+  app.get("/training", async (c) => {
+    const user = await requireUser(c);
+    return c.json(await store.getTrainingHome(user));
+  });
+
+  app.get("/training/workouts", async (c) => {
+    const user = await requireUser(c);
+    const home = await store.getTrainingHome(user);
+    return c.json({
+      assignment: home.assignment,
+      program: home.program,
+      workouts: home.workouts,
+    });
+  });
+
+  app.get("/training/workouts/:id", async (c) => {
+    const user = await requireUser(c);
+    return c.json(await store.getWorkoutDetail(user, c.req.param("id")));
+  });
+
+  app.post("/training/workouts/:id/log", async (c) => {
+    const user = await requireUser(c);
+    const body = await c.req.json<LogWorkoutInput>().catch(() => ({}) as LogWorkoutInput);
+    const log = await store.logWorkout(user, c.req.param("id"), body);
+    return c.json({ log, workout: await store.getWorkoutDetail(user, c.req.param("id")) });
   });
 
   return app;
