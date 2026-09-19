@@ -21,7 +21,7 @@ Lily (COS) owns end-to-end product and architecture decisions for this app. Davi
 | Surface | Intended owner account | M0 status |
 | --- | --- | --- |
 | GitHub | `davidmills88` / Ajax Fitness owner | This repo |
-| Supabase (Auth + Postgres) | Same Ajax Fitness owner account | Preferred live path. **Not required for M0.** Leave env blank and use the in-memory mock. |
+| Supabase (Auth + Postgres) | Same Ajax Fitness owner account | Live project `ajax-training-app`: M0 + `0002` + seed already applied (ops box). App still mocks if env is blank. |
 | API host | Vercel or Fly, same owner | Documented target. Local `npm run dev:api` is enough for M0. |
 | Apple Developer | `david@ajaxgym.com` | Planned for TestFlight / Sign in with Apple. **Do not block M0** on creating the team. Apple Sign-In stays stubbed. |
 | Expo / EAS | `david@ajaxgym.com` Expo account | Placeholders in `apps/mobile` (`com.ajaxgym.training`, `eas.json` `preview`). **Do not block** on creating the account. Expo Go / web + mock auth is the default. |
