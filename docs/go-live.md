@@ -9,13 +9,14 @@ No secrets belong in git. Copy keys from the ops box file pattern `/workspace/aj
 ## 1. Create the Vercel project
 
 1. In [Vercel](https://vercel.com) → **Add New → Project** → import `davidmills88/ajax-training-app`.
-2. **Framework Preset:** Other.
-3. **Root Directory:** leave the repository root (uses root `vercel.json` + `api/index.ts`).
-   - Alternative: set Root Directory to `apps/api` (uses `apps/api/vercel.json` + `apps/api/api/index.ts`). Same function either way.
+2. **Framework Preset: Other (required in the dashboard).** Do **not** pick Hono (or any frontend). The Hono preset made production fail with `STATIC_BUILD_NO_OUT_DIR` (Vercel looks for a static `public/` folder). Auto-detect / Hono would also use `apps/api/src/index.ts` (`serve()`), not the serverless entry. Repo `vercel.json` sets `"framework": null` (Other), but a dashboard Hono value may persist — **null cannot be reliably PATCHed via API**, so a human must set this in **Project Settings → General → Build & Development → Framework Preset → Other**.
+3. **Root Directory: repository root** (`vercel.json` + `api/index.ts`). Do **not** set Root Directory to `apps/api` — Vercel then cannot resolve the `@ajax/shared` workspace package (`ERR_MODULE_NOT_FOUND` on `…/node_modules/@ajax/shared/src/index.ts`). Shared is built to `packages/shared/dist/*.js` during install so Node can load it from the repo root.
 4. **Node.js:** 20.x (repo `engines`).
-5. Do **not** enable a frontend framework (or Hono auto-detect). `vercel.json` sets `"framework": null` so Vercel uses the `api/` function, not local `src/index.ts` (`serve()`). The rewrite sends every path to that Node function (`@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`.
+5. **Build & Output:** API-only. `vercel.json` sets `"buildCommand": null` and `"outputDirectory": null` so Vercel does **not** run a static build. A typecheck-only Build Command (`npm run typecheck -w @ajax/shared && …`) is what made Vercel expect `public/` after the build. Install stays `npm ci`. Typecheck is local / CI (`npm run typecheck`), not the Vercel build.
+   - If **Override** is on for Build Command or Output Directory, leave both fields **empty** (or turn Override off). Do not set Output Directory to `public`. Do not add an empty `public/` folder.
+6. The rewrite sends every path to the Node function (`api/index.ts` → `@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`. Root `package.json` is `"type": "module"`. The entry uses **dynamic `import()`** of `apps/api/src/vercel.ts` (not `export { default } from "../apps/api/api/index.js"`), so a CJS-compiled shim cannot `require()` the ESM package (`ERR_REQUIRE_ESM`). Install runs `npm ci && npm run build -w @ajax/shared` so `@ajax/shared` is JavaScript in the function bundle (`includeFiles` covers `packages/shared/dist/**`).
 
-Install/build are already in `vercel.json` (`npm ci` + workspace typecheck). First deploy can fail until env is set — that is expected if you want a green health check against live Postgres.
+A first deploy can still return mock `mode` until env is set — that is expected if you want a green health check against live Postgres. The deploy itself should succeed without a static output directory.
 
 ## 2. Vercel env vars (keys only)
 
@@ -109,10 +110,12 @@ Do not commit `apps/mobile/.env`. Placeholders stay in `.env.example`. Expo Go /
 If this agent could not run `vercel --prod` (no `VERCEL_TOKEN`):
 
 1. Import the repo (or reconnect if a project already exists).
-2. Root Directory = repository root **or** `apps/api` (see §1).
-3. Add the table in §2 from `/workspace/ajax-training-app.env` (keys above — not the file contents).
-4. Deploy production.
-5. Confirm `GET https://<prod>/health` → `ok: true` and `mode` is `live` when the pooler URL works.
-6. Tell David the production URL so `EXPO_PUBLIC_API_URL` can be set on the device / Expo start.
+2. **Dashboard (code cannot clear this):** Framework Preset = **Other**, not Hono. See §1 step 2. This is the toggle that must still be flipped if the project object still reports `framework: hono`.
+3. Root Directory = **repository root** (not `apps/api`). See §1 step 3.
+4. Confirm Build Command and Output Directory are empty (no `public`). See §1 step 5 if a prior deploy failed with `STATIC_BUILD_NO_OUT_DIR`.
+5. Env keys already used on this project (do not rename): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `COACH_API_KEY` (plus optional keys in §2). Paste values from `/workspace/ajax-training-app.env` — not the file contents into git.
+6. Deploy production (Dashboard **Deploy** or `npx vercel --prod` after `vercel link`).
+7. Confirm `GET https://<prod>/health` → `ok: true` and `mode` is `live` when the pooler URL works.
+8. Tell David the production URL so `EXPO_PUBLIC_API_URL` can be set on the device / Expo start.
 
 Schema + seed on `ajax-training-app` are already applied (ops box). See [m1-live-supabase.md](./m1-live-supabase.md).

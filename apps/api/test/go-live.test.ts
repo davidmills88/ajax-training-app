@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createApp } from "../src/app.js";
 import { extraCorsOrigins, isAllowedCorsOrigin, resolveCorsOrigin } from "../src/cors.js";
 import { postgresPoolSsl } from "../src/postgres-ssl.js";
 import { createRuntimeApp } from "../src/server.js";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("postgres ssl for live Supabase", () => {
   it("enables rejectUnauthorized:false for supabase hosts without NODE_TLS_REJECT_UNAUTHORIZED", () => {
@@ -107,5 +112,86 @@ describe("runtime bootstrap", () => {
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.mode, "mock");
+  });
+});
+
+describe("vercel ESM function entry", () => {
+  it("marks the repo as ESM so Vercel does not CJS-require the workspace package", () => {
+    const pkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+    assert.equal(pkg.type, "module");
+  });
+
+  it("uses dynamic import() instead of a CJS re-export shim", () => {
+    const source = readFileSync(join(repoRoot, "api/index.ts"), "utf8");
+    const code = source
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("*") && !line.trimStart().startsWith("/**") && !line.trimStart().startsWith("//"))
+      .join("\n");
+    assert.match(code, /await import\(/);
+    assert.match(code, /createVercelHandler/);
+    assert.doesNotMatch(code, /export \{ default/);
+    assert.doesNotMatch(code, /apps\/api\/api\//);
+  });
+
+  it("points @ajax/shared at built JS so Vercel Node does not import .ts", () => {
+    const pkg = JSON.parse(readFileSync(join(repoRoot, "packages/shared/package.json"), "utf8"));
+    const exp = pkg.exports["."];
+    const importPath = typeof exp === "string" ? exp : exp.import;
+    assert.match(importPath, /dist\/index\.js$/);
+    assert.notEqual(importPath, "./src/index.ts");
+  });
+
+  it("serves GET /health from the Vercel handler in mock mode", async () => {
+    const { createVercelHandler } = await import("../src/vercel.js");
+    const handler = await createVercelHandler();
+    const res = await handler(new Request("https://ajax-training-app.vercel.app/health"));
+    assert.ok(res instanceof Response);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.service, "ajax-api");
+  });
+
+  it("serves GET /health through the root api/ dynamic-import entry", async () => {
+    const { default: handler } = await import(pathToFileURL(join(repoRoot, "api/index.ts")).href);
+    const res = await handler(new Request("https://ajax-training-app.vercel.app/health"));
+    assert.ok(res instanceof Response);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.service, "ajax-api");
+  });
+});
+
+describe("vercel api-only project config", () => {
+  function assertApiOnlyVercelJson(config: {
+    framework: unknown;
+    buildCommand: unknown;
+    outputDirectory: unknown;
+    rewrites?: { source: string; destination: string }[];
+    functions?: Record<string, unknown>;
+  }) {
+    assert.equal(config.framework, null);
+    assert.equal(config.buildCommand, null);
+    assert.equal(config.outputDirectory, null);
+    const rewrite = config.rewrites?.find((row) => row.destination === "/api");
+    assert.ok(rewrite, "expected a rewrite to /api so GET /health is not /api/health");
+    const fn = config.functions?.["api/index.ts"] as { includeFiles?: string } | undefined;
+    assert.ok(fn, "expected the Hono serverless entry");
+    if (fn.includeFiles) {
+      assert.match(fn.includeFiles, /packages\/shared/);
+    }
+  }
+
+  it("root vercel.json skips the static public output and routes to api/index.ts", () => {
+    const config = JSON.parse(readFileSync(join(repoRoot, "vercel.json"), "utf8"));
+    assertApiOnlyVercelJson(config);
+    const includeFiles = config.functions["api/index.ts"].includeFiles as string;
+    assert.match(includeFiles, /packages\/shared\/dist/);
+  });
+
+  it("apps/api vercel.json matches the same serverless-only settings", () => {
+    const config = JSON.parse(readFileSync(join(repoRoot, "apps/api/vercel.json"), "utf8"));
+    assertApiOnlyVercelJson(config);
   });
 });

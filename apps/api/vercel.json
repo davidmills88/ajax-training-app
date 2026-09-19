@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "cd ../.. && npm ci",
-  "buildCommand": "cd ../.. && npm run typecheck -w @ajax/shared && npm run typecheck -w @ajax/api",
+  "installCommand": "cd ../.. && npm ci && npm run build -w @ajax/shared",
+  "buildCommand": null,
+  "outputDirectory": null,
   "rewrites": [
     {
       "source": "/(.*)",
