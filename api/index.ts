@@ -1,1 +1,6 @@
-export { default, config } from "../apps/api/api/index.js";
+import { config, createVercelHandler } from "../apps/api/src/vercel.js";
+
+export { config };
+
+/** Vercel Node entry. Must stay ESM (root package.json `"type": "module"`). */
+export default await createVercelHandler();

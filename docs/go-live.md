@@ -15,7 +15,7 @@ No secrets belong in git. Copy keys from the ops box file pattern `/workspace/aj
 4. **Node.js:** 20.x (repo `engines`).
 5. **Build & Output:** API-only. `vercel.json` sets `"buildCommand": null` and `"outputDirectory": null` so Vercel does **not** run a static build. A typecheck-only Build Command (`npm run typecheck -w @ajax/shared && …`) is what made Vercel expect `public/` after the build. Install stays `npm ci`. Typecheck is local / CI (`npm run typecheck`), not the Vercel build.
    - If **Override** is on for Build Command or Output Directory, leave both fields **empty** (or turn Override off). Do not set Output Directory to `public`. Do not add an empty `public/` folder.
-6. The rewrite sends every path to the Node function (`api/index.ts` → `@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`.
+6. The rewrite sends every path to the Node function (`api/index.ts` → `@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`. Root `package.json` is `"type": "module"` and `api/index.ts` is a real ESM handler (not a CJS re-export into `@ajax/api`). That avoids `ERR_REQUIRE_ESM` / `FUNCTION_INVOCATION_FAILED` on `GET /health`.
 
 A first deploy can still return mock `mode` until env is set — that is expected if you want a green health check against live Postgres. The deploy itself should succeed without a static output directory.
 

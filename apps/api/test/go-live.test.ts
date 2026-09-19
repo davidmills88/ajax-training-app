@@ -115,6 +115,30 @@ describe("runtime bootstrap", () => {
   });
 });
 
+describe("vercel ESM function entry", () => {
+  it("marks the repo as ESM so Vercel does not CJS-require the workspace package", () => {
+    const pkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+    assert.equal(pkg.type, "module");
+  });
+
+  it("uses a real root api/ entry instead of a CJS re-export shim", () => {
+    const source = readFileSync(join(repoRoot, "api/index.ts"), "utf8");
+    assert.match(source, /createVercelHandler/);
+    assert.doesNotMatch(source, /from ["']\.\.\/apps\/api\/api\//);
+  });
+
+  it("serves GET /health from the Vercel handler in mock mode", async () => {
+    const { createVercelHandler } = await import("../src/vercel.js");
+    const handler = await createVercelHandler();
+    const res = await handler(new Request("https://ajax-training-app.vercel.app/health"));
+    assert.ok(res instanceof Response);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.service, "ajax-api");
+  });
+});
+
 describe("vercel api-only project config", () => {
   function assertApiOnlyVercelJson(config: {
     framework: unknown;

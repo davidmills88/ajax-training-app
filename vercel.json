@@ -14,7 +14,7 @@
     "api/index.ts": {
       "memory": 1024,
       "maxDuration": 30,
-      "includeFiles": "packages/shared/**"
+      "includeFiles": "{apps/api/**,packages/shared/**}"
     }
   }
 }
