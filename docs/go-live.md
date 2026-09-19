@@ -9,12 +9,12 @@ No secrets belong in git. Copy keys from the ops box file pattern `/workspace/aj
 ## 1. Create the Vercel project
 
 1. In [Vercel](https://vercel.com) → **Add New → Project** → import `davidmills88/ajax-training-app`.
-2. **Framework Preset:** Other. Do **not** pick Hono (or any frontend). Auto-detect would try `apps/api/src/index.ts` (`serve()`), not the serverless entry.
+2. **Framework Preset: Other (required in the dashboard).** Do **not** pick Hono (or any frontend). The Hono preset made production fail with `STATIC_BUILD_NO_OUT_DIR` (Vercel looks for a static `public/` folder). Auto-detect / Hono would also use `apps/api/src/index.ts` (`serve()`), not the serverless entry. Repo `vercel.json` sets `"framework": null` (Other), but a dashboard Hono value may persist — **null cannot be reliably PATCHed via API**, so a human must set this in **Project Settings → General → Build & Development → Framework Preset → Other**.
 3. **Root Directory:** leave the repository root (uses root `vercel.json` + `api/index.ts`).
    - Alternative: set Root Directory to `apps/api` (uses `apps/api/vercel.json` + `apps/api/api/index.ts`). Same function either way.
 4. **Node.js:** 20.x (repo `engines`).
-5. **Build & Output:** this is an API-only project. `vercel.json` sets `"framework": null`, `"buildCommand": null`, and `"outputDirectory": null` so Vercel does **not** run a static build or look for a `public/` folder (that combination is what produced `STATIC_BUILD_NO_OUT_DIR`). Install is `npm ci`. Typecheck stays local / CI (`npm run typecheck`), not the Vercel build.
-   - If the dashboard still has **Override** on for Build Command or Output Directory, turn Override **on** and leave both fields **empty** (or turn Override off so `vercel.json` wins). Do not set Output Directory to `public`.
+5. **Build & Output:** API-only. `vercel.json` sets `"buildCommand": null` and `"outputDirectory": null` so Vercel does **not** run a static build. A typecheck-only Build Command (`npm run typecheck -w @ajax/shared && …`) is what made Vercel expect `public/` after the build. Install stays `npm ci`. Typecheck is local / CI (`npm run typecheck`), not the Vercel build.
+   - If **Override** is on for Build Command or Output Directory, leave both fields **empty** (or turn Override off). Do not set Output Directory to `public`. Do not add an empty `public/` folder.
 6. The rewrite sends every path to the Node function (`api/index.ts` → `@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`.
 
 A first deploy can still return mock `mode` until env is set — that is expected if you want a green health check against live Postgres. The deploy itself should succeed without a static output directory.
@@ -110,12 +110,13 @@ Do not commit `apps/mobile/.env`. Placeholders stay in `.env.example`. Expo Go /
 
 If this agent could not run `vercel --prod` (no `VERCEL_TOKEN`):
 
-1. Import the repo (or reconnect if a project already exists). Framework Preset = Other.
-2. Root Directory = repository root **or** `apps/api` (see §1).
-3. Confirm Build Command and Output Directory are empty (no `public`). See §1 step 5 if a prior deploy failed with `STATIC_BUILD_NO_OUT_DIR`.
-4. Add the table in §2 from `/workspace/ajax-training-app.env` (keys above — not the file contents).
-5. Deploy production (Dashboard **Deploy** or `npx vercel --prod` after `vercel link`).
-6. Confirm `GET https://<prod>/health` → `ok: true` and `mode` is `live` when the pooler URL works.
-7. Tell David the production URL so `EXPO_PUBLIC_API_URL` can be set on the device / Expo start.
+1. Import the repo (or reconnect if a project already exists).
+2. **Dashboard (code cannot clear this):** Framework Preset = **Other**, not Hono. See §1 step 2. This is the toggle that must still be flipped if the project object still reports `framework: hono`.
+3. Root Directory = repository root **or** `apps/api` (see §1).
+4. Confirm Build Command and Output Directory are empty (no `public`). See §1 step 5 if a prior deploy failed with `STATIC_BUILD_NO_OUT_DIR`.
+5. Env keys already used on this project (do not rename): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `COACH_API_KEY` (plus optional keys in §2). Paste values from `/workspace/ajax-training-app.env` — not the file contents into git.
+6. Deploy production (Dashboard **Deploy** or `npx vercel --prod` after `vercel link`).
+7. Confirm `GET https://<prod>/health` → `ok: true` and `mode` is `live` when the pooler URL works.
+8. Tell David the production URL so `EXPO_PUBLIC_API_URL` can be set on the device / Expo start.
 
 Schema + seed on `ajax-training-app` are already applied (ops box). See [m1-live-supabase.md](./m1-live-supabase.md).
