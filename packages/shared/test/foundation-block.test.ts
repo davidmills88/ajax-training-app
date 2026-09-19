@@ -77,9 +77,16 @@ describe("generateFoundationBlock", () => {
     assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Goal thread: Quiet strength")));
     assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Availability: 3 days/week")));
     assert.ok(block.workouts.every((row) => (row.notes ?? "").includes("Equipment:")));
-    assert.ok(block.workouts.some((row) => row.videoUrl?.includes("http")));
+    assert.ok(block.workouts.every((row) => row.videoUrl?.includes("http")));
+    assert.ok(
+      block.workouts.every((row) =>
+        (row.segments ?? []).every((segment) => /^https?:\/\//i.test(segment.videoUrl ?? "")),
+      ),
+    );
+    assert.ok(block.workouts.every((row) => (row.segments ?? []).length >= 5));
     assert.ok(segmentNames(happyIntake).some((name) => /split squat/i.test(name)));
     assert.ok(segmentNames(happyIntake).some((name) => /broad jump/i.test(name)));
+    assert.ok(segmentNames(happyIntake).some((name) => /easy bike or walk|dead bug|face pull/i.test(name)));
   });
 
   it("swaps deep loaded lunges and jumps when a knee limitation is mentioned", () => {

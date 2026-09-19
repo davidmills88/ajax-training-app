@@ -6,9 +6,8 @@ import {
   isOnboardingSectionId,
   validateSectionAnswers,
 } from "./onboarding.js";
+import { DEMO_BLOCK, DEMO_MEMBER_EMAIL } from "./demo-block.js";
 import {
-  DEMO_BLOCK,
-  DEMO_MEMBER_EMAIL,
   isCoachRole,
   validateCreateBlock,
   type CreateBlockInput,

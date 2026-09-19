@@ -105,7 +105,13 @@ describe("InMemoryAjaxStore", () => {
     assert.equal(day8Fixture.workouts.length, 18);
     const days = new Set(day8Fixture.workouts.map((row) => row.day));
     assert.deepEqual([...days].sort(), [1, 3, 5]);
-    assert.ok(day8Fixture.workouts.some((row) => row.videoUrl));
+    assert.ok(day8Fixture.workouts.every((row) => row.videoUrl));
+    assert.ok(
+      day8Fixture.workouts.every((row) =>
+        (row.segments ?? []).every((segment) => /^https?:\/\//i.test(segment.videoUrl ?? "")),
+      ),
+    );
+    assert.ok(day8Fixture.workouts.every((row) => (row.segments ?? []).length >= 5));
 
     const store = new InMemoryAjaxStore();
     const coach = store.issueSession("david@ajaxgym.com").user;

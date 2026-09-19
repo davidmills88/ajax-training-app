@@ -45,11 +45,11 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 ## What M1 is
 
 - **Assigned block:** a coach (or Pace via API) creates a 6-week program of workouts and assigns it to a roster email.
-- **Member home:** after onboarding, the member sees the active block by week/day, with optional `video_url`.
+- **Member home:** after onboarding, the member sees the active block by week/day. Each exercise has a form `videoUrl`; WorkoutScreen opens it in an in-app modal (`VideoPopup`), not an external browser.
 - **Result log:** weight, reps, score, notes, and mark complete. One log per workout per assignment.
 - **Seed:** `member@ajax.local` already has the demo “Ajax Foundation — 6 weeks” block. In mock mode that member is also marked onboarding-complete so home is immediate.
 - **Coach API:** `POST /coach/blocks` + `POST /coach/blocks/:id/assign`, plus Dave's `POST /coach/assign-from-intake` (intake JSON → create + assign). Owner session (`david@ajaxgym.com`) or `X-Coach-Key` when `COACH_API_KEY` is set.
-- **Day-8 fixture:** `fixtures/day-8-foundation-6-week.json` (18 sessions, 3×/week). Print or run the curl flow with `npm run assign:day8`.
+- **Day-8 fixture:** `fixtures/day-8-foundation-6-week.json` (18 full sessions, 3×/week, per-exercise videos). Print or run the curl flow with `npm run assign:day8`.
 
 ## What M1.1 is
 

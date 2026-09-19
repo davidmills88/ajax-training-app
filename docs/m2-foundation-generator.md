@@ -10,7 +10,8 @@ Thin auto block from Client Summary / Dave intake. **Not** a full programming en
 - Week themes: **settle → load → density → strength → power-ish → settle**.
 - Program notes always include **`M2 first pass — coach may swap`**.
 - Goals, limitations, equipment, and availability are written onto program notes, per-session notes, and segment prescriptions (shorter sets for ~30 min, extra set for 75+).
-- Optional `videos.lower` / `upper` / `aerobic` (or `videoUrl`) attach; otherwise public placeholder URLs.
+- Optional `videos.lower` / `upper` / `aerobic` (or `videoUrl`) attach at **session** level; otherwise a slot placeholder.
+- Every segment also gets its own movement `videoUrl` from the shared catalog (`movement-videos.ts`). Intake slot URLs do not replace per-exercise clips. Newly generated blocks stamp both.
 
 ## Limitation swaps (simple)
 

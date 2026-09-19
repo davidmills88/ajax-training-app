@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Linking, View } from "react-native";
-import type { WorkoutDetail } from "@ajax/shared";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import type { WorkoutDetail, WorkoutSegment } from "@ajax/shared";
 import { fetchWorkout, logWorkoutResult } from "../api";
+import { colors, space } from "../theme";
 import { Banner, Body, Button, ErrorText, FieldLabel, Input, Kicker, Muted, Screen, Title } from "../ui";
+import { VideoPopup } from "../VideoPopup";
 
 export function WorkoutScreen({
   token,
@@ -22,6 +24,7 @@ export function WorkoutScreen({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [popup, setPopup] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
     void fetchWorkout(token, workoutId)
@@ -58,7 +61,11 @@ export function WorkoutScreen({
   }
 
   const workout = detail?.workout;
-  const videoUrl = workout?.videoUrl;
+  const sessionVideo = workout?.videoUrl;
+
+  function openVideo(url: string, title: string) {
+    setPopup({ url, title });
+  }
 
   return (
     <Screen
@@ -78,26 +85,20 @@ export function WorkoutScreen({
       </Kicker>
       <Title>{workout?.title ?? "Loading…"}</Title>
       {workout?.notes ? <Body>{workout.notes}</Body> : null}
-      {videoUrl ? (
-        <Button
-          label="Watch the movement"
-          variant="ghost"
-          onPress={() => {
-            void Linking.openURL(videoUrl).catch(() => setError("Could not open the video link."));
-          }}
-        />
+      {sessionVideo ? (
+        <Button label="Watch the session" variant="ghost" onPress={() => openVideo(sessionVideo, workout?.title ?? "Session")} />
       ) : (
-        <Banner>No video on this session. Use the notes and segments below.</Banner>
+        <Banner>No session-level clip. Open a Video control on any exercise below.</Banner>
       )}
       {workout?.segments?.length ? (
-        <View>
+        <View style={styles.work}>
           <Kicker>Work</Kicker>
-          {workout.segments.map((segment) => (
-            <Muted key={`${segment.name}-${segment.prescription ?? ""}`}>
-              {segment.name}
-              {segment.prescription ? ` — ${segment.prescription}` : ""}
-              {segment.notes ? `. ${segment.notes}` : ""}
-            </Muted>
+          {workout.segments.map((segment, index) => (
+            <SegmentRow
+              key={`${segment.name}-${segment.prescription ?? ""}-${index}`}
+              segment={segment}
+              onVideo={openVideo}
+            />
           ))}
         </View>
       ) : null}
@@ -121,6 +122,69 @@ export function WorkoutScreen({
         <Muted>Save when you finish. You can update the numbers later.</Muted>
       )}
       <ErrorText>{error}</ErrorText>
+      <VideoPopup
+        visible={Boolean(popup)}
+        url={popup?.url}
+        title={popup?.title}
+        onClose={() => setPopup(null)}
+      />
     </Screen>
   );
 }
+
+function SegmentRow({
+  segment,
+  onVideo,
+}: {
+  segment: WorkoutSegment;
+  onVideo: (url: string, title: string) => void;
+}) {
+  const videoUrl = segment.videoUrl?.trim();
+  return (
+    <View style={styles.segment}>
+      <View style={styles.segmentCopy}>
+        <Text style={styles.segmentName}>{segment.name}</Text>
+        <Text style={styles.segmentMeta}>
+          {segment.prescription ?? ""}
+          {segment.prescription && segment.notes ? ". " : ""}
+          {segment.notes ?? ""}
+        </Text>
+      </View>
+      {videoUrl ? (
+        <Pressable
+          onPress={() => onVideo(videoUrl, segment.name)}
+          accessibilityRole="button"
+          accessibilityLabel={`Video for ${segment.name}`}
+          style={styles.videoChip}
+        >
+          <Text style={styles.videoChipLabel}>Video</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  work: { gap: space.sm },
+  segment: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  segmentCopy: { flex: 1 },
+  segmentName: { color: colors.text, fontSize: 16, fontWeight: "600" },
+  segmentMeta: { color: colors.muted, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  videoChip: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  videoChipLabel: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+});

@@ -1,6 +1,6 @@
 {
   "title": "Day 8 Foundation — 6 weeks",
-  "notes": "First custom Day-8 block: three sessions a week (days 1 / 3 / 5), strength plus easy aerobic work. Load only when the movement stays quiet and controlled. Video URLs are public placeholders until Ajax uploads form clips.",
+  "notes": "First custom Day-8 block: three sessions a week (days 1 / 3 / 5), strength plus easy aerobic work. Load only when the movement stays quiet and controlled. Every exercise has an in-app form video (public YouTube placeholders until Ajax uploads clips).",
   "durationWeeks": 6,
   "workouts": [
     {
@@ -12,6 +12,28 @@
       "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Goblet squat",
           "prescription": "3 × 8",
           "notes": "Pause one breath at the bottom.",
@@ -20,11 +42,24 @@
         {
           "name": "Romanian deadlift",
           "prescription": "3 × 6",
-          "notes": "Soft knees, long spine."
+          "notes": "Soft knees, long spine.",
+          "videoUrl": "https://www.youtube.com/watch?v=jEy_czb3RKA"
         },
         {
           "name": "Calf raise",
-          "prescription": "2 × 12"
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=gwLzBJYoWlI"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -37,16 +72,52 @@
       "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Dumbbell bench press",
-          "prescription": "3 × 8"
+          "prescription": "3 × 8",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Chest-supported row",
-          "prescription": "3 × 8"
+          "prescription": "3 × 8",
+          "videoUrl": "https://www.youtube.com/watch?v=0AAj1_JMa5s"
         },
         {
           "name": "Half-kneeling press",
-          "prescription": "2 × 8 / side"
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=LJFDdAsLkqY"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -59,12 +130,30 @@
       "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "30–40 min walk, bike, or ski-erg"
+          "prescription": "30–40 min walk, bike, or ski-erg",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "Hip 90/90",
-          "prescription": "2 × 45s / side"
+          "prescription": "2 × 45s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=qFULQztXMl4"
+        },
+        {
+          "name": "Couch stretch",
+          "prescription": "2 × 40s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=aQ2-Hw1tUoU"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
         }
       ]
     },
@@ -77,16 +166,53 @@
       "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Goblet squat",
-          "prescription": "3 × 8"
+          "prescription": "3 × 8",
+          "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4"
         },
         {
           "name": "Romanian deadlift",
-          "prescription": "3 × 6"
+          "prescription": "3 × 6",
+          "notes": "Soft knees, long spine.",
+          "videoUrl": "https://www.youtube.com/watch?v=jEy_czb3RKA"
         },
         {
           "name": "Split squat",
-          "prescription": "2 × 8 / side"
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=2C-uNgKwPRO"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -96,18 +222,56 @@
       "sortOrder": 4,
       "title": "Upper body — clean positions",
       "notes": "Keep the ribs stacked. Do not chase a pump.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Dumbbell bench press",
-          "prescription": "3 × 8"
+          "prescription": "3 × 8",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Chest-supported row",
-          "prescription": "3 × 10"
+          "prescription": "3 × 10",
+          "videoUrl": "https://www.youtube.com/watch?v=0AAj1_JMa5s"
         },
         {
           "name": "Face pull",
-          "prescription": "2 × 12"
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Pallof press",
+          "prescription": "2 × 8 / side",
+          "notes": "Anti-rotation. Ribs stacked.",
+          "videoUrl": "https://www.youtube.com/watch?v=jT2i7d_Xj1E"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -120,12 +284,30 @@
       "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "35–45 min"
+          "prescription": "35–45 min",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "Couch stretch",
-          "prescription": "2 × 40s / side"
+          "prescription": "2 × 40s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=aQ2-Hw1tUoU"
+        },
+        {
+          "name": "Hip 90/90",
+          "prescription": "2 × 45s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=qFULQztXMl4"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
         }
       ]
     },
@@ -135,18 +317,56 @@
       "sortOrder": 6,
       "title": "Lower body — density",
       "notes": "Shorter rests if the last set still looks like the first.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Front-loaded squat",
-          "prescription": "4 × 6"
+          "prescription": "4 × 6",
+          "videoUrl": "https://www.youtube.com/watch?v=uYumu6Ss-rk"
         },
         {
           "name": "Hip hinge",
-          "prescription": "3 × 6"
+          "prescription": "3 × 6",
+          "notes": "Soft knees, long spine.",
+          "videoUrl": "https://www.youtube.com/watch?v=zlPPB5vG6nM"
         },
         {
           "name": "Calf raise",
-          "prescription": "3 × 10"
+          "prescription": "3 × 10",
+          "videoUrl": "https://www.youtube.com/watch?v=gwLzBJYoWlI"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -159,16 +379,52 @@
       "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Dumbbell bench press",
-          "prescription": "4 × 6"
+          "prescription": "4 × 6",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Single-arm row",
-          "prescription": "3 × 8 / side"
+          "prescription": "3 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=pYcpY20QaE8"
         },
         {
           "name": "Half-kneeling press",
-          "prescription": "3 × 6 / side"
+          "prescription": "3 × 6 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=LJFDdAsLkqY"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -178,14 +434,33 @@
       "sortOrder": 8,
       "title": "Aerobic — slightly longer",
       "notes": "Stay conversational. If you cannot speak a sentence, ease off.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "40–50 min"
+          "prescription": "40–50 min",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "World's greatest stretch",
-          "prescription": "2 / side"
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
         }
       ]
     },
@@ -195,18 +470,56 @@
       "sortOrder": 9,
       "title": "Lower body — strength emphasis",
       "notes": "Top sets at a true 7/10 effort. No grinding.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Squat pattern",
-          "prescription": "4 × 5"
+          "prescription": "4 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4"
         },
         {
           "name": "Romanian deadlift",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "notes": "Soft knees, long spine.",
+          "videoUrl": "https://www.youtube.com/watch?v=jEy_czb3RKA"
         },
         {
           "name": "Cossack squat",
-          "prescription": "2 × 6 / side"
+          "prescription": "2 × 6 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=0vN3wzS1tKU"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Farmer carry",
+          "prescription": "2 × 30m",
+          "videoUrl": "https://www.youtube.com/watch?v=p5ZNcoUo6g8"
         }
       ]
     },
@@ -216,18 +529,56 @@
       "sortOrder": 10,
       "title": "Upper body — strength emphasis",
       "notes": "Pause the last rep of each set on the chest or at the hang.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Press",
-          "prescription": "4 × 5"
+          "prescription": "4 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Row",
-          "prescription": "4 × 6"
+          "prescription": "4 × 6",
+          "videoUrl": "https://www.youtube.com/watch?v=pYcpY20QaE8"
         },
         {
           "name": "Carry",
-          "prescription": "2 × 30m"
+          "prescription": "2 × 30m",
+          "videoUrl": "https://www.youtube.com/watch?v=p5ZNcoUo6g8"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Easy bike or walk",
+          "prescription": "6–8 min",
+          "notes": "Conversational. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         }
       ]
     },
@@ -240,12 +591,30 @@
       "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "40 min"
+          "prescription": "40 min",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "Ankle rocks",
-          "prescription": "2 × 10 / side"
+          "prescription": "2 × 10 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
         }
       ]
     },
@@ -255,18 +624,55 @@
       "sortOrder": 12,
       "title": "Lower body — power without chaos",
       "notes": "Crisp reps. Stop before the landing gets loud.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Squat pattern",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4"
         },
         {
           "name": "Box step-up",
-          "prescription": "3 × 5 / side"
+          "prescription": "3 × 5 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=aajvk3zYwN8"
         },
         {
           "name": "Broad jump (soft)",
-          "prescription": "3 × 3"
+          "prescription": "3 × 3",
+          "videoUrl": "https://www.youtube.com/watch?v=7g8Gz0E8Y54"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Suitcase carry",
+          "prescription": "2 × 20m",
+          "videoUrl": "https://www.youtube.com/watch?v=pAplQXk3dkU"
         }
       ]
     },
@@ -276,18 +682,56 @@
       "sortOrder": 13,
       "title": "Upper body — press, pull, carry",
       "notes": "A little more snap, same control.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Press",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Row",
-          "prescription": "3 × 6"
+          "prescription": "3 × 6",
+          "videoUrl": "https://www.youtube.com/watch?v=pYcpY20QaE8"
         },
         {
           "name": "Farmer carry",
-          "prescription": "3 × 30m"
+          "prescription": "3 × 30m",
+          "videoUrl": "https://www.youtube.com/watch?v=p5ZNcoUo6g8"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Easy bike or walk",
+          "prescription": "6–8 min",
+          "notes": "Conversational. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         }
       ]
     },
@@ -297,14 +741,34 @@
       "sortOrder": 14,
       "title": "Aerobic — steady",
       "notes": "Same easy pace. This week is about arriving recovered.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "40–45 min"
+          "prescription": "40–45 min",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "Breathing reset",
-          "prescription": "5 min nasal, slow"
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
+        },
+        {
+          "name": "Hip 90/90",
+          "prescription": "2 × 45s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=qFULQztXMl4"
+        },
+        {
+          "name": "Easy walk-out",
+          "prescription": "5 min",
+          "notes": "Unhurried. Write a word for how the week felt.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         }
       ]
     },
@@ -314,18 +778,56 @@
       "sortOrder": 15,
       "title": "Lower body — settle and note",
       "notes": "Repeat a week-4 load if it still feels quiet. Write down what moved well.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Nasal if you can. This is just to get warm.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=baKCCRIIoKo"
+        },
+        {
+          "name": "Glute bridge",
+          "prescription": "2 × 8",
+          "notes": "Pause at the top. Ribs down.",
+          "videoUrl": "https://www.youtube.com/watch?v=OUgsJ8-Qmt8"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 8 / side",
+          "videoUrl": "https://www.youtube.com/watch?v=lCj5oZKw5cY"
+        },
+        {
           "name": "Squat pattern",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4"
         },
         {
           "name": "Hinge",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "notes": "Soft knees, long spine.",
+          "videoUrl": "https://www.youtube.com/watch?v=zlPPB5vG6nM"
         },
         {
           "name": "Calf raise",
-          "prescription": "2 × 12"
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=gwLzBJYoWlI"
+        },
+        {
+          "name": "Dead bug",
+          "prescription": "2 × 6 / side",
+          "notes": "Low back stays quiet on the floor.",
+          "videoUrl": "https://www.youtube.com/watch?v=4XLEnwUr1l4"
+        },
+        {
+          "name": "Farmer carry",
+          "prescription": "2 × 30m",
+          "videoUrl": "https://www.youtube.com/watch?v=p5ZNcoUo6g8"
         }
       ]
     },
@@ -335,18 +837,56 @@
       "sortOrder": 16,
       "title": "Upper body — settle and note",
       "notes": "Same idea as Tuesday. This is a checkpoint, not a test day.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
       "segments": [
         {
+          "name": "Easy bike or walk",
+          "prescription": "5 min",
+          "notes": "Unhurried. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
+          "name": "Band pull-apart",
+          "prescription": "2 × 12",
+          "notes": "Long spine. Stop if the shrug takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=sHPj_e7YLrc"
+        },
+        {
+          "name": "Cat-cow",
+          "prescription": "6 breaths",
+          "videoUrl": "https://www.youtube.com/watch?v=kqnua4SFIvA"
+        },
+        {
           "name": "Press",
-          "prescription": "3 × 5"
+          "prescription": "3 × 5",
+          "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg"
         },
         {
           "name": "Row",
-          "prescription": "3 × 6"
+          "prescription": "3 × 6",
+          "videoUrl": "https://www.youtube.com/watch?v=pYcpY20QaE8"
         },
         {
           "name": "Carry",
-          "prescription": "2 × 30m"
+          "prescription": "2 × 30m",
+          "videoUrl": "https://www.youtube.com/watch?v=p5ZNcoUo6g8"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12",
+          "videoUrl": "https://www.youtube.com/watch?v=0Po47sVQ6QM"
+        },
+        {
+          "name": "Side plank",
+          "prescription": "2 × 20s / side",
+          "notes": "Hips stacked. Stop if the low back takes over.",
+          "videoUrl": "https://www.youtube.com/watch?v=K2VljzCC16g"
+        },
+        {
+          "name": "Easy bike or walk",
+          "prescription": "6–8 min",
+          "notes": "Conversational. Shake the arms out.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         }
       ]
     },
@@ -359,12 +899,31 @@
       "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
       "segments": [
         {
+          "name": "Easy walk-in",
+          "prescription": "5 min",
+          "notes": "Arrive unhurried.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+        },
+        {
           "name": "Zone 2",
-          "prescription": "30–40 min"
+          "prescription": "30–40 min",
+          "notes": "Easy finish. Write a short note for your coach.",
+          "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI"
         },
         {
           "name": "Full-body mobility",
-          "prescription": "8–10 min"
+          "prescription": "8–10 min",
+          "videoUrl": "https://www.youtube.com/watch?v=L_XVyHNvQnI"
+        },
+        {
+          "name": "Couch stretch",
+          "prescription": "2 × 40s / side",
+          "videoUrl": "https://www.youtube.com/watch?v=aQ2-Hw1tUoU"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow",
+          "videoUrl": "https://www.youtube.com/watch?v=tybOi4hjZFQ"
         }
       ]
     }

@@ -39,6 +39,11 @@ describe("blockFromIntake", () => {
     assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Watch:")));
     const names = block.workouts.flatMap((row) => (row.segments ?? []).map((segment) => segment.name));
     assert.ok(!names.some((name) => /split squat|cossack|broad jump/i.test(name)));
+    assert.ok(
+      block.workouts.every((row) =>
+        (row.segments ?? []).every((segment) => /^https?:\/\//i.test(segment.videoUrl ?? "")),
+      ),
+    );
   });
 
   it("keeps the M1.2 DEMO_BLOCK overlay behind { skeleton: true }", () => {
@@ -49,6 +54,11 @@ describe("blockFromIntake", () => {
     assert.ok(!block.notes?.includes(M2_FIRST_PASS_MARK));
     const names = block.workouts.flatMap((row) => (row.segments ?? []).map((segment) => segment.name));
     assert.ok(names.some((name) => /split squat/i.test(name)));
+    assert.ok(
+      block.workouts.every((row) =>
+        (row.segments ?? []).every((segment) => /^https?:\/\//i.test(segment.videoUrl ?? "")),
+      ),
+    );
   });
 
   it("accepts a nested clientSummary and optional title override", () => {
