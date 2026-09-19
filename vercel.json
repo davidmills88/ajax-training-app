@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm ci",
+  "installCommand": "npm ci && npm run build -w @ajax/shared",
   "buildCommand": null,
   "outputDirectory": null,
   "rewrites": [
@@ -14,7 +14,7 @@
     "api/index.ts": {
       "memory": 1024,
       "maxDuration": 30,
-      "includeFiles": "{apps/api/**,packages/shared/**}"
+      "includeFiles": "{apps/api/**,packages/shared/package.json,packages/shared/dist/**,packages/shared/src/**}"
     }
   }
 }
