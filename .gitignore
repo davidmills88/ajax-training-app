@@ -14,3 +14,10 @@ coverage/
 apps/mobile/web-build/
 apps/api/dist/
 packages/shared/dist/
+
+# EAS / Apple credentials — never commit. eas login + the Apple team live on the human machine.
+credentials.json
+*.p8
+*.p12
+*.mobileprovision
+.eas/

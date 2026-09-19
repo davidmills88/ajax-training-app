@@ -1,0 +1,372 @@
+{
+  "title": "Day 8 Foundation — 6 weeks",
+  "notes": "First custom Day-8 block: three sessions a week (days 1 / 3 / 5), strength plus easy aerobic work. Load only when the movement stays quiet and controlled. Video URLs are public placeholders until Ajax uploads form clips.",
+  "durationWeeks": 6,
+  "workouts": [
+    {
+      "week": 1,
+      "day": 1,
+      "sortOrder": 0,
+      "title": "Lower body — settle the pattern",
+      "notes": "Find depth and a still torso before you chase load. Leave two reps in reserve.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
+      "segments": [
+        {
+          "name": "Goblet squat",
+          "prescription": "3 × 8",
+          "notes": "Pause one breath at the bottom.",
+          "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4"
+        },
+        {
+          "name": "Romanian deadlift",
+          "prescription": "3 × 6",
+          "notes": "Soft knees, long spine."
+        },
+        {
+          "name": "Calf raise",
+          "prescription": "2 × 12"
+        }
+      ]
+    },
+    {
+      "week": 1,
+      "day": 3,
+      "sortOrder": 1,
+      "title": "Upper body — press and pull",
+      "notes": "Even tempo. Stop the set when the shoulder shrug starts to take over.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
+      "segments": [
+        {
+          "name": "Dumbbell bench press",
+          "prescription": "3 × 8"
+        },
+        {
+          "name": "Chest-supported row",
+          "prescription": "3 × 8"
+        },
+        {
+          "name": "Half-kneeling press",
+          "prescription": "2 × 8 / side"
+        }
+      ]
+    },
+    {
+      "week": 1,
+      "day": 5,
+      "sortOrder": 2,
+      "title": "Easy aerobic + mobility",
+      "notes": "Conversational pace. This is recovery you can still feel proud of.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "30–40 min walk, bike, or ski-erg"
+        },
+        {
+          "name": "Hip 90/90",
+          "prescription": "2 × 45s / side"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "day": 1,
+      "sortOrder": 3,
+      "title": "Lower body — add a little load",
+      "notes": "Same patterns as week 1. A small jump in weight is enough.",
+      "videoUrl": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
+      "segments": [
+        {
+          "name": "Goblet squat",
+          "prescription": "3 × 8"
+        },
+        {
+          "name": "Romanian deadlift",
+          "prescription": "3 × 6"
+        },
+        {
+          "name": "Split squat",
+          "prescription": "2 × 8 / side"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "day": 3,
+      "sortOrder": 4,
+      "title": "Upper body — clean positions",
+      "notes": "Keep the ribs stacked. Do not chase a pump.",
+      "segments": [
+        {
+          "name": "Dumbbell bench press",
+          "prescription": "3 × 8"
+        },
+        {
+          "name": "Chest-supported row",
+          "prescription": "3 × 10"
+        },
+        {
+          "name": "Face pull",
+          "prescription": "2 × 12"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "day": 5,
+      "sortOrder": 5,
+      "title": "Easy aerobic + walk-out",
+      "notes": "Same zone 2 as week 1. Finish with unhurried breathing.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "35–45 min"
+        },
+        {
+          "name": "Couch stretch",
+          "prescription": "2 × 40s / side"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "day": 1,
+      "sortOrder": 6,
+      "title": "Lower body — density",
+      "notes": "Shorter rests if the last set still looks like the first.",
+      "segments": [
+        {
+          "name": "Front-loaded squat",
+          "prescription": "4 × 6"
+        },
+        {
+          "name": "Hip hinge",
+          "prescription": "3 × 6"
+        },
+        {
+          "name": "Calf raise",
+          "prescription": "3 × 10"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "day": 3,
+      "sortOrder": 7,
+      "title": "Upper body — denser sets",
+      "notes": "One extra working set. Form still wins.",
+      "videoUrl": "https://www.youtube.com/watch?v=0G2_XV7slIg",
+      "segments": [
+        {
+          "name": "Dumbbell bench press",
+          "prescription": "4 × 6"
+        },
+        {
+          "name": "Single-arm row",
+          "prescription": "3 × 8 / side"
+        },
+        {
+          "name": "Half-kneeling press",
+          "prescription": "3 × 6 / side"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "day": 5,
+      "sortOrder": 8,
+      "title": "Aerobic — slightly longer",
+      "notes": "Stay conversational. If you cannot speak a sentence, ease off.",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "40–50 min"
+        },
+        {
+          "name": "World's greatest stretch",
+          "prescription": "2 / side"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "day": 1,
+      "sortOrder": 9,
+      "title": "Lower body — strength emphasis",
+      "notes": "Top sets at a true 7/10 effort. No grinding.",
+      "segments": [
+        {
+          "name": "Squat pattern",
+          "prescription": "4 × 5"
+        },
+        {
+          "name": "Romanian deadlift",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Cossack squat",
+          "prescription": "2 × 6 / side"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "day": 3,
+      "sortOrder": 10,
+      "title": "Upper body — strength emphasis",
+      "notes": "Pause the last rep of each set on the chest or at the hang.",
+      "segments": [
+        {
+          "name": "Press",
+          "prescription": "4 × 5"
+        },
+        {
+          "name": "Row",
+          "prescription": "4 × 6"
+        },
+        {
+          "name": "Carry",
+          "prescription": "2 × 30m"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "day": 5,
+      "sortOrder": 11,
+      "title": "Easy aerobic — keep the week honest",
+      "notes": "Do not turn this into intervals.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "40 min"
+        },
+        {
+          "name": "Ankle rocks",
+          "prescription": "2 × 10 / side"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "day": 1,
+      "sortOrder": 12,
+      "title": "Lower body — power without chaos",
+      "notes": "Crisp reps. Stop before the landing gets loud.",
+      "segments": [
+        {
+          "name": "Squat pattern",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Box step-up",
+          "prescription": "3 × 5 / side"
+        },
+        {
+          "name": "Broad jump (soft)",
+          "prescription": "3 × 3"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "day": 3,
+      "sortOrder": 13,
+      "title": "Upper body — press, pull, carry",
+      "notes": "A little more snap, same control.",
+      "segments": [
+        {
+          "name": "Press",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Row",
+          "prescription": "3 × 6"
+        },
+        {
+          "name": "Farmer carry",
+          "prescription": "3 × 30m"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "day": 5,
+      "sortOrder": 14,
+      "title": "Aerobic — steady",
+      "notes": "Same easy pace. This week is about arriving recovered.",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "40–45 min"
+        },
+        {
+          "name": "Breathing reset",
+          "prescription": "5 min nasal, slow"
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "day": 1,
+      "sortOrder": 15,
+      "title": "Lower body — settle and note",
+      "notes": "Repeat a week-4 load if it still feels quiet. Write down what moved well.",
+      "segments": [
+        {
+          "name": "Squat pattern",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Hinge",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Calf raise",
+          "prescription": "2 × 12"
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "day": 3,
+      "sortOrder": 16,
+      "title": "Upper body — settle and note",
+      "notes": "Same idea as Tuesday. This is a checkpoint, not a test day.",
+      "segments": [
+        {
+          "name": "Press",
+          "prescription": "3 × 5"
+        },
+        {
+          "name": "Row",
+          "prescription": "3 × 6"
+        },
+        {
+          "name": "Carry",
+          "prescription": "2 × 30m"
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "day": 5,
+      "sortOrder": 17,
+      "title": "Easy finish",
+      "notes": "Walk, breathe, write a short note for your coach. The next block starts from here.",
+      "videoUrl": "https://www.youtube.com/watch?v=L_xrDAtykMI",
+      "segments": [
+        {
+          "name": "Zone 2",
+          "prescription": "30–40 min"
+        },
+        {
+          "name": "Full-body mobility",
+          "prescription": "8–10 min"
+        }
+      ]
+    }
+  ]
+}

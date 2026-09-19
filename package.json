@@ -11,7 +11,8 @@
     "dev:mobile": "npm run start -w @ajax/mobile",
     "dev:web": "npm run web -w @ajax/mobile",
     "test": "npm test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "assign:day8": "bash scripts/assign-day8-block.sh"
   },
   "engines": {
     "node": ">=20"

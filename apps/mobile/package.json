@@ -7,6 +7,8 @@
     "start": "expo start",
     "ios": "expo start --ios",
     "web": "expo start --web --port 8081",
+    "eas:login": "npx eas-cli login",
+    "eas:build:ios:preview": "npx eas-cli build -p ios --profile preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
