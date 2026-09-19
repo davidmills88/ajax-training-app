@@ -135,8 +135,23 @@ function printFlow(args: Args, file: string, email: string): void {
     "",
     "# Equivalent: npm run assign:from-intake -- --run --email " + email + " --file " + file,
     "",
-    "# GET /training is optional. Live magic-link often returns otp_failed — ignore after assign.",
+    "# GET /training: mint a member session (live magic-link has no session / is often rate-limited)",
   );
+  if (process.env.COACH_API_KEY) {
+    lines.push(
+      `MEMBER=$(curl -sS ${base}/auth/coach-session \\`,
+      "  -H 'Content-Type: application/json' \\",
+      "  -H 'X-Coach-Key: $COACH_API_KEY' \\",
+      `  -d '{"email":"${email}"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")`,
+    );
+  } else {
+    lines.push(
+      `MEMBER=$(curl -sS ${base}/auth/magic-link \\`,
+      "  -H 'Content-Type: application/json' \\",
+      `  -d '{"email":"${email}"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")`,
+    );
+  }
+  lines.push(`curl -sS ${base}/training -H "Authorization: Bearer $MEMBER"`);
   console.log(lines.join("\n"));
 }
 
@@ -220,6 +235,24 @@ async function createAndAssignFallback(
 
 async function verifyMemberTraining(base: string, email: string): Promise<{ skipped: boolean }> {
   console.error(`Verifying GET /training as ${email} (best-effort)…`);
+  const coachKey = process.env.COACH_API_KEY;
+  if (coachKey) {
+    const mintedResponse = await fetch(`${base}/auth/coach-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Coach-Key": coachKey },
+      body: JSON.stringify({ email }),
+    });
+    const minted = await readJsonResponse(mintedResponse);
+    if (mintedResponse.ok) {
+      const session = asRecord(asRecord(minted.parsed).session);
+      return finishMemberTraining(base, session);
+    }
+    if (mintedResponse.status !== 404) {
+      throw new Error(`POST ${base}/auth/coach-session → ${minted.status}: ${minted.text}`);
+    }
+    console.error("POST /auth/coach-session not deployed; falling back to magic-link verify.");
+  }
+
   const loginResponse = await fetch(`${base}/auth/magic-link`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -235,6 +268,10 @@ async function verifyMemberTraining(base: string, email: string): Promise<{ skip
     throw new Error(`POST ${base}/auth/magic-link → ${login.status}: ${login.text}`);
   }
   const session = asRecord(asRecord(login.parsed).session);
+  return finishMemberTraining(base, session);
+}
+
+async function finishMemberTraining(base: string, session: Record<string, unknown>): Promise<{ skipped: boolean }> {
   const training = asRecord(
     await jsonRequest(`${base}/training`, {
       headers: { Authorization: `Bearer ${String(session.accessToken)}` },

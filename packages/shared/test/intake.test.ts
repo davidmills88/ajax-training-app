@@ -90,6 +90,7 @@ describe("blockFromIntake", () => {
 
   it("treats live magic-link otp_failed as a skip, not a hard failure", () => {
     assert.match(magicLinkVerifySkipReason(502, { error: "otp_failed" }) ?? "", /otp_failed/);
+    assert.match(magicLinkVerifySkipReason(429, { error: "otp_rate_limited" }) ?? "", /otp_rate_limited/);
     assert.match(magicLinkVerifySkipReason(200, { sent: true }) ?? "", /did not return a session/);
     assert.equal(magicLinkVerifySkipReason(403, { error: "not_on_roster" }), null);
     assert.equal(magicLinkVerifySkipReason(200, { session: { accessToken: "t" } }), null);

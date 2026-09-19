@@ -3,8 +3,16 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { blockFromIntake, emptyConsentQuestionnaire, ONBOARDING_SECTIONS, type DaveIntake } from "@ajax/shared";
+import {
+  blockFromIntake,
+  emptyConsentQuestionnaire,
+  InMemoryAjaxStore,
+  ONBOARDING_SECTIONS,
+  type DaveIntake,
+} from "@ajax/shared";
 import { createApp } from "../src/app.js";
+import { magicLinkOtpFailure } from "../src/magic-link-otp.js";
+import { memoryRepo } from "../src/repo.js";
 
 const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures");
 const day8Fixture = JSON.parse(readFileSync(join(fixturesDir, "day-8-foundation-6-week.json"), "utf8")) as {
@@ -450,6 +458,178 @@ describe("ajax api", () => {
     } finally {
       if (previous === undefined) delete process.env.COACH_API_KEY;
       else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("rejects coach-session without coach auth", async () => {
+    const app = createApp();
+    const res = await app.request("/auth/coach-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "member@ajax.local" }),
+    });
+    assert.equal(res.status, 401);
+    const body = await res.json();
+    assert.equal(body.error, "unauthorized");
+    assert.equal(body.session, undefined);
+  });
+
+  it("rejects a mismatched X-Coach-Key on coach-session", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const res = await app.request("/auth/coach-session", {
+        method: "POST",
+        headers: { "X-Coach-Key": "wrong-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      assert.equal(res.status, 401);
+      assert.equal((await res.json()).session, undefined);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("rejects coach-session for an unknown or inactive roster email", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const store = new InMemoryAjaxStore();
+      store.addRoster("inactive@ajax.local", "Inactive Member", "inactive");
+      const app = createApp(memoryRepo(store));
+      const headers = { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" };
+
+      const unknown = await app.request("/auth/coach-session", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email: "stranger@example.com" }),
+      });
+      assert.equal(unknown.status, 403);
+      assert.equal((await unknown.json()).error, "not_on_roster");
+
+      const inactive = await app.request("/auth/coach-session", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email: "inactive@ajax.local" }),
+      });
+      assert.equal(inactive.status, 403);
+      assert.equal((await inactive.json()).error, "inactive_roster");
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("mints a demo session for an active roster email and unlocks GET /training", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const minted = await app.request("/auth/coach-session", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      assert.equal(minted.status, 200);
+      const body = await minted.json();
+      assert.equal(body.sent, true);
+      assert.equal(body.mock, false);
+      assert.equal(body.demo, true);
+      assert.equal(typeof body.session.accessToken, "string");
+      assert.equal(body.session.user.email, "member@ajax.local");
+
+      const home = await app.request("/training", {
+        headers: { Authorization: `Bearer ${body.session.accessToken}` },
+      });
+      assert.equal(home.status, 200);
+      const homeBody = await home.json();
+      assert.equal(homeBody.program.title, "Ajax Foundation — 6 weeks");
+      assert.equal(homeBody.workouts.length, 18);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("forbids a member session from minting coach-session", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const memberLogin = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      const token = (await memberLogin.json()).session.accessToken as string;
+      const res = await app.request("/auth/coach-session", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "seth@ajaxgym.com" }),
+      });
+      assert.equal(res.status, 403);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("maps live OTP rate-limit and other failures to public messages", () => {
+    const rate = magicLinkOtpFailure(429, { error_code: "over_email_send_rate_limit", msg: "email rate limit exceeded" });
+    assert.equal(rate.error, "otp_rate_limited");
+    assert.equal(rate.status, 429);
+    assert.match(rate.message, /rate-limit/i);
+    assert.doesNotMatch(rate.message, /supabase|apikey|service.role/i);
+
+    const other = magicLinkOtpFailure(500, { msg: "unexpected" });
+    assert.equal(other.error, "otp_failed");
+    assert.equal(other.status, 502);
+    assert.match(other.message, /Could not send the magic link/);
+  });
+
+  it("surfaces live magic-link rate-limit in the JSON body", { concurrency: false }, async () => {
+    const previous = {
+      url: process.env.SUPABASE_URL,
+      anon: process.env.SUPABASE_ANON_KEY,
+      service: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      database: process.env.DATABASE_URL,
+    };
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_ANON_KEY = "anon-test";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-test";
+    delete process.env.DATABASE_URL;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+      assert.match(String(input), /\/auth\/v1\/otp$/);
+      return new Response(JSON.stringify({ error_code: "over_email_send_rate_limit", msg: "email rate limit exceeded" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
+    };
+    try {
+      const app = createApp();
+      const res = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      assert.equal(res.status, 429);
+      const body = await res.json();
+      assert.equal(body.error, "otp_rate_limited");
+      assert.match(body.message, /rate-limit/i);
+      assert.doesNotMatch(JSON.stringify(body), /service-test|anon-test/);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (previous.url === undefined) delete process.env.SUPABASE_URL;
+      else process.env.SUPABASE_URL = previous.url;
+      if (previous.anon === undefined) delete process.env.SUPABASE_ANON_KEY;
+      else process.env.SUPABASE_ANON_KEY = previous.anon;
+      if (previous.service === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+      else process.env.SUPABASE_SERVICE_ROLE_KEY = previous.service;
+      if (previous.database === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = previous.database;
     }
   });
 

@@ -38,7 +38,7 @@ curl -sS "${AJAX_API_URL:-https://ajax-training-app.vercel.app}/coach/assign-fro
 
 Expect `201` with `program`, `workouts` (18), `assignment.status` `active`. Unknown roster emails are `400` / `not_on_roster`. A wrong `X-Coach-Key` is `401`. Members cannot call this.
 
-This route **does not** send SMS, email, or a magic link. `GET /training` as the member is optional and often fails live with `otp_failed` (Supabase email) — that is expected. Do not retry assign because of OTP.
+This route **does not** send SMS, email, or a magic link. After assign, mint a member session with `POST /auth/coach-session` (same `X-Coach-Key`) and `GET /training`. Live magic-link OTP is often rate-limited — do not retry assign because of OTP. See [go-live.md — Demo the app](./go-live.md#7-demo-the-app-no-email-otp).
 
 **Equivalent npm (ops box / local):**
 
@@ -48,7 +48,7 @@ export COACH_API_KEY=…          # not committed
 npm run assign:from-intake -- --run --email member@ajax.local --file fixtures/sample-intake.json
 ```
 
-`--run` POSTs `/coach/assign-from-intake`, then tries `GET /training`. If magic-link returns `otp_failed`, it prints a warning and **exits 0**.
+`--run` POSTs `/coach/assign-from-intake`, then verifies `GET /training`. When `COACH_API_KEY` is set it mints `POST /auth/coach-session` (no email). If that route is not deployed yet, it falls back to magic-link; `otp_failed` prints a warning and **exits 0**.
 
 ## What you need
 
@@ -182,15 +182,22 @@ Unknown emails return `400` / `not_on_roster`. This replaces the member's active
 ### (c) Verify member `GET /training` (optional)
 
 ```bash
-MEMBER=$(curl -sS http://localhost:8787/auth/magic-link \
+# Live (or mock): coach-gated demo session — no email
+MEMBER=$(curl -sS http://localhost:8787/auth/coach-session \
   -H 'Content-Type: application/json' \
+  -H "X-Coach-Key: $COACH_API_KEY" \
   -d '{"email":"member@ajax.local"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")
+
+# Mock only: magic-link returns a session immediately
+# MEMBER=$(curl -sS http://localhost:8787/auth/magic-link \
+#   -H 'Content-Type: application/json' \
+#   -d '{"email":"member@ajax.local"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")
 
 curl -sS http://localhost:8787/training \
   -H "Authorization: Bearer $MEMBER"
 ```
 
-Expect `program.title` like `Demo Member — 6 weeks`, `workouts.length` `18`, `assignment.status` `active`. Live Auth will not return `MEMBER` from magic-link (`otp_failed` or `{ sent: true }` without a session) — verify in the app or with a live member session. Do not treat that as an assign failure.
+Expect `program.title` like `Demo Member — 6 weeks`, `workouts.length` `18`, `assignment.status` `active`. Live magic-link will not return `MEMBER` — use `/auth/coach-session`. Do not treat OTP failure as an assign failure.
 
 ## Day-8 fixture (no intake)
 

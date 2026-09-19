@@ -10,5 +10,6 @@ module.exports = ({ config }) => ({
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
     useMock: process.env.EXPO_PUBLIC_USE_MOCK ?? "1",
+    demoCoachKey: process.env.EXPO_PUBLIC_DEMO_COACH_KEY ?? "",
   },
 });

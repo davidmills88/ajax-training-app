@@ -27,7 +27,7 @@ Paste from the ops box `ajax-training-app.env` (or `apps/api/.env` on that machi
 | `DATABASE_URL` | Yes | Prefer the Supabase **transaction pooler** (`*.pooler.supabase.com:6543`) for serverless. Direct `db.<ref>.supabase.co:5432` also works. |
 | `SUPABASE_URL` | Yes | Project URL (`https://<ref>.supabase.co`). |
 | `SUPABASE_ANON_KEY` | Yes | Public anon key. Magic-link OTP. |
-| `COACH_API_KEY` | Yes for Pace assign | Header `X-Coach-Key` for `assign:from-intake` against live Auth. |
+| `COACH_API_KEY` | Yes for Pace assign + demo login | Header `X-Coach-Key` for `assign:from-intake` and `POST /auth/coach-session`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional | Server-only. Flips `runtimeMode()` to live even without a reachable DB. **Never** put this on Expo. |
 | `DATABASE_SSL` | Optional | Unset: auto `{ rejectUnauthorized: false }` on Supabase / pooler hosts. `0` only for local TLS-off Postgres. Do **not** set `NODE_TLS_REJECT_UNAUTHORIZED=0`. |
 | `CORS_ORIGINS` | Optional | Extra browser origins, comma-separated. Unset stays permissive. Expo web (`localhost:8081`), LAN, `*.expo.dev`, `*.vercel.app`, `*.ajaxgym.com` are always allowed. |
@@ -61,13 +61,15 @@ curl -sS -D- -o /dev/null -X OPTIONS https://YOUR-API/health \
   -H 'Access-Control-Request-Method: GET'
 ```
 
-**Magic-link (mock-or-OTP):** if `DATABASE_URL` is reachable, mode is `live` and `POST /auth/magic-link` sends a Supabase OTP (no session in the JSON). If Postgres is down, the function falls back to memory and returns a mock session for roster emails.
+**Magic-link (mock-or-OTP):** if `DATABASE_URL` is reachable, mode is `live` and `POST /auth/magic-link` sends a Supabase OTP (no session in the JSON). A rate-limited Supabase OTP returns `429` `{ error: "otp_rate_limited", message: "…" }` instead of an opaque `502 otp_failed`. If Postgres is down, the function falls back to memory and returns a mock session for roster emails.
 
 ```bash
 curl -sS https://YOUR-API/auth/magic-link \
   -H 'Content-Type: application/json' \
   -d '{"email":"member@ajax.local"}'
 ```
+
+Live OTP is often rate-limited. To demo `GET /training` without email, use [Demo the app](#7-demo-the-app-no-email-otp).
 
 **Assign + training** (needs `COACH_API_KEY` on Vercel and in this shell):
 
@@ -88,10 +90,15 @@ curl -sS https://YOUR-API/coach/assign-from-intake \
   --data-binary @fixtures/sample-intake.json
 ```
 
-Manual `GET /training` after a member OTP (paste the access token from Supabase / the app):
+Manual `GET /training` after minting a coach-gated demo session (no OTP):
 
 ```bash
-curl -sS https://YOUR-API/training -H "Authorization: Bearer $MEMBER_TOKEN"
+MEMBER=$(curl -sS https://YOUR-API/auth/coach-session \
+  -H 'Content-Type: application/json' \
+  -H "X-Coach-Key: $COACH_API_KEY" \
+  -d '{"email":"member@ajax.local"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")
+
+curl -sS https://YOUR-API/training -H "Authorization: Bearer $MEMBER"
 ```
 
 ## 5. Mobile live wiring
@@ -112,7 +119,7 @@ npm run dev:mobile
 # or: npm run dev:web
 ```
 
-Do not commit `apps/mobile/.env`. Placeholders stay in `.env.example`. Expo Go / web against the live API is enough — **no TestFlight / EAS build in this milestone**.
+Do not commit `apps/mobile/.env`. Placeholders stay in `.env.example`. Expo Go / web against the live API is enough — **no TestFlight / EAS build in this milestone**. Live magic-link does not return a session; see [Demo the app](#7-demo-the-app-no-email-otp).
 
 ## 6. What Pace must set on Vercel after merge
 
@@ -128,3 +135,50 @@ If this agent could not run `vercel --prod` (no `VERCEL_TOKEN`):
 8. Tell David the production URL so `EXPO_PUBLIC_API_URL` can be set on the device / Expo start.
 
 Schema + seed on `ajax-training-app` are already applied (ops box). See [m1-live-supabase.md](./m1-live-supabase.md).
+
+## 7. Demo the app (no email OTP)
+
+Live `POST /auth/magic-link` calls Supabase `/auth/v1/otp`. That path can return `429 over_email_send_rate_limit` (API: `otp_rate_limited`) or `502 otp_failed`. Even a successful send is `{ sent: true }` with **no session** — Expo Go cannot finish sign-in without a deep link.
+
+Use a coach-gated session instead. **No email or SMS is sent.** Unauthenticated callers cannot mint a token.
+
+### Roster email
+
+Use an **active** roster address. Seeded demo member: `member@ajax.local` (Foundation block on the live project). Other roster emails: `david@ajaxgym.com`, `seth@ajaxgym.com`, `playwright@ajax.local`.
+
+### Mint a session, then open training
+
+`COACH_API_KEY` lives on Vercel / the ops box — **not in git**.
+
+```bash
+export AJAX_API_URL=https://YOUR-API
+export COACH_API_KEY=…          # same value as Vercel — not committed
+
+MEMBER=$(curl -sS "$AJAX_API_URL/auth/coach-session" \
+  -H 'Content-Type: application/json' \
+  -H "X-Coach-Key: $COACH_API_KEY" \
+  -d '{"email":"member@ajax.local"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")
+
+curl -sS "$AJAX_API_URL/training" -H "Authorization: Bearer $MEMBER"
+```
+
+Expect `200` with the assigned program (`program.title`, `workouts`, `assignment.status: "active"`). Missing or wrong `X-Coach-Key` → `401`. Unknown or inactive email → `403`.
+
+### Expo Go (walk the UI)
+
+Point the app at the public API (not `localhost`). Start a tunnel so a phone not on the same LAN can open the project:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+# EXPO_PUBLIC_API_URL=https://YOUR-API
+# EXPO_PUBLIC_USE_MOCK=0
+# optional, local only — never commit: EXPO_PUBLIC_DEMO_COACH_KEY=$COACH_API_KEY
+npx expo start --tunnel
+```
+
+Open the Expo Go tunnel link (`exp://…` or the Expo project URL). Sign-in with `member@ajax.local`. If magic-link fails with a rate-limit / `otp_failed` message, LoginScreen shows a one-line note pointing here. Then either:
+
+1. Use the curl above to confirm `GET /training`, or
+2. Tap **Demo sign-in (coach)** only if `EXPO_PUBLIC_DEMO_COACH_KEY` is set in the local Expo env (same value as `COACH_API_KEY`; do not commit it).
+
+Do not put `COACH_API_KEY` or `EXPO_PUBLIC_DEMO_COACH_KEY` in git.
