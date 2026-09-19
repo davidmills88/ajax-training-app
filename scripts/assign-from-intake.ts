@@ -225,16 +225,22 @@ async function runFlow(args: Args, block: ReturnType<typeof blockFromIntake>, em
   console.log(JSON.stringify({ program: training.program, assignment: training.assignment, workoutCount: trainingWorkouts.length }, null, 2));
 }
 
-const args = parseArgs(process.argv.slice(2));
-const file = resolve(args.file);
-const intake = loadIntake(file);
-const email = args.email?.trim() || resolveIntakeEmail(intake) || "member@ajax.local";
-const block = blockFromIntake(intake);
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2));
+  const file = resolve(args.file);
+  const intake = loadIntake(file);
+  const email = args.email?.trim() || resolveIntakeEmail(intake) || "member@ajax.local";
+  const block = blockFromIntake(intake);
 
-if (args.printBlock) {
-  console.log(JSON.stringify(block, null, 2));
-} else if (args.run) {
-  await runFlow(args, block, email);
-} else {
+  if (args.printBlock) {
+    console.log(JSON.stringify(block, null, 2));
+    return;
+  }
+  if (args.run) {
+    await runFlow(args, block, email);
+    return;
+  }
   printFlow(args, file, email);
 }
+
+void main();

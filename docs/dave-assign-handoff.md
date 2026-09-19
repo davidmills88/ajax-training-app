@@ -59,10 +59,10 @@ Dave can POST or save a JSON object. Client Summary keys match onboarding (`buil
 
 The mapper always emits **6 weeks × 3 sessions (days 1 / 3 / 5)** using the Foundation movement skeleton. Goals, limitations, and recovery notes are written onto the program and workouts. This is a first-pass block, not periodization.
 
-Print the mapped body without calling the API:
+Print the mapped body without calling the API (`-s` hides the npm banner so the output is valid JSON):
 
 ```bash
-npm run assign:from-intake -- --print-block --file fixtures/sample-intake.json
+npm run -s assign:from-intake -- --print-block --file fixtures/sample-intake.json
 ```
 
 ## One command (preferred)
