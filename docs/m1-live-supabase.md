@@ -1,24 +1,26 @@
 # M1.1 — live Supabase path
 
-M1 already shipped the training tables and coach API. This is the human checklist to point a deployed (or local) API + mobile app at a real `ajax-training-app` project. **Mock fallback stays the default** if these env vars are blank or Postgres is unreachable.
+M1 already shipped the training tables and coach API. This is the checklist to point a deployed (or local) API + mobile app at the Ajax `ajax-training-app` project. **Mock fallback stays the default** if these env vars are blank or Postgres is unreachable.
 
-No secrets belong in git. Copy `.env.example` files locally.
+No secrets belong in git. Do not invent or paste keys here. Copy `.env.example` files locally; live values live in the ops box / host env only.
 
 ## 1. Project
 
-In the [Supabase dashboard](https://supabase.com/dashboard), create or open the project named **`ajax-training-app`** under the Ajax Fitness owner. Copy the project URL and **anon** key from **Project Settings → API**. Never put the **service_role** key in Expo, `EXPO_PUBLIC_*`, or this repo.
+The Ajax Fitness owner project is named **`ajax-training-app`**. Copy the project URL and **anon** key from **Project Settings → API** into local or host env — never into this repo, Expo `EXPO_PUBLIC_*` commits, or a PR. Never put the **service_role** key in the client.
 
-Enable email magic links in **Authentication**. Apple Sign-In stays stubbed.
+Enable email magic links in **Authentication** if they are not already on. Apple Sign-In stays stubbed.
 
-## 2. Apply migrations + seed (safe to re-run)
+## 2. Schema + seed (already applied on live)
 
-Both SQL files are written to be re-runnable:
+Live `ajax-training-app` already has M0 tables. **`0002_training.sql` + `seed.sql` were applied from the shared ops box env** (Pace). Verified on that project: program **Ajax Foundation — 6 weeks**, 18 workouts, active `program_assignments` row for `member@ajax.local`.
+
+Re-running is safe if a new environment needs the same schema (ops box only — this repo does not embed connection strings):
 
 - `0001_init.sql` / `0002_training.sql`: `create table/index if not exists`, `create or replace function`, `drop policy if exists` then `create policy`.
 - `seed.sql`: `on conflict` upserts for roster, the demo Foundation block, and the `member@ajax.local` assignment.
 
 ```bash
-# Dashboard SQL editor, or any machine that can reach the project:
+# Ops box / dashboard SQL editor — uses env that is not in git:
 psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
 psql "$DATABASE_URL" -f supabase/migrations/0002_training.sql
 psql "$DATABASE_URL" -f supabase/seed.sql
@@ -79,9 +81,8 @@ That replaces the member's active block. Seeded `Ajax Foundation — 6 weeks` re
 
 ## 5. What still needs a human
 
-- Create the Supabase project and paste URL / anon / `DATABASE_URL` / service_role into local or host env (Vercel / Fly).
-- Run the three SQL files once (re-running is safe).
-- Set `COACH_API_KEY` if Pace should assign without a magic-link session.
+- Paste the existing project URL / anon / `DATABASE_URL` / service_role into **local or host env** (Vercel / Fly / ops box). Not into git.
+- Set `COACH_API_KEY` on the API if Pace should assign without a magic-link session.
 - Point `EXPO_PUBLIC_API_URL` at the deployed API before a device / TestFlight build.
 
-Not required here: Apple Developer, EAS cloud build, Apple Sign-In, Wellyx, SMS, Stripe.
+Schema work on live is done (`0002` + seed via ops box). Not required for this PR: Apple Developer login, EAS cloud build, Apple Sign-In, Wellyx, SMS, Stripe.

@@ -50,7 +50,7 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 ## What M1.1 is
 
 - **EAS prep:** `apps/mobile/eas.json` (`preview` / `development` / `production`) and Ajax bundle id `com.ajaxgym.training`. Docs for `eas login` + `eas build -p ios --profile preview`. No credentials, no required cloud build.
-- **Live Supabase docs:** [docs/m1-live-supabase.md](docs/m1-live-supabase.md) — apply migrations, seed, env vars for API + mobile.
+- **Live Supabase docs:** [docs/m1-live-supabase.md](docs/m1-live-supabase.md) — env map for API + mobile. Live `0002` + seed are already applied on the Ajax project via the ops box.
 - **Assign script:** `npm run assign:day8` prints (or `--run` posts) the coach create+assign curl flow against a base URL.
 
 ## What M0 / M1 are not
@@ -86,7 +86,7 @@ Sign in with `member@ajax.local` to land on the seeded 6-week block (mock mode s
 
 ### Optional live path (Supabase + Postgres)
 
-Create a project named **`ajax-training-app`** under the Ajax Fitness owner. Full steps, env map, and the service_role warning: [docs/supabase-setup.md](docs/supabase-setup.md).
+The Ajax owner project **`ajax-training-app`** exists. Live `0002_training.sql` + seed are already applied via the ops box (Foundation block assigned to `member@ajax.local`). Full env map and the service_role warning: [docs/m1-live-supabase.md](docs/m1-live-supabase.md), [docs/supabase-setup.md](docs/supabase-setup.md).
 
 ```bash
 cp apps/api/.env.example apps/api/.env
@@ -163,7 +163,7 @@ curl -s http://localhost:8787/training/workouts/WORKOUT_ID/log \
   -d '{"weight":"32","reps":"8,8,8","score":"7/10","notes":"Quiet depth.","completed":true}'
 ```
 
-Live path: apply `0001_init.sql`, `0002_training.sql`, then `seed.sql`. Step-by-step env map: [docs/m1-live-supabase.md](docs/m1-live-supabase.md) and [docs/supabase-setup.md](docs/supabase-setup.md). The API uses Postgres when `DATABASE_URL` is reachable; otherwise it stays on the in-memory mock, including the seeded demo assignment.
+Live path: the Ajax `ajax-training-app` project already has M0 tables plus **`0002_training.sql` + seed applied via the ops box env** (Foundation block, 18 workouts, `member@ajax.local` assigned). Re-run those files only if a new database needs the same schema — they are idempotent. Do not put connection strings or keys in this repo. Env map: [docs/m1-live-supabase.md](docs/m1-live-supabase.md) and [docs/supabase-setup.md](docs/supabase-setup.md). The API uses Postgres when `DATABASE_URL` is reachable; otherwise it stays on the in-memory mock, including the seeded demo assignment.
 
 Print the same create+assign flow (or run it against a base URL):
 
