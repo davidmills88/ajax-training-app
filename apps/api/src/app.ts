@@ -14,6 +14,7 @@ import {
 } from "@ajax/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { resolveCorsOrigin } from "./cors.js";
 import { runtimeMode } from "./env.js";
 import { memoryRepo, type AjaxRepo } from "./repo.js";
 
@@ -24,7 +25,7 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
   app.use(
     "*",
     cors({
-      origin: "*",
+      origin: resolveCorsOrigin,
       allowHeaders: ["Authorization", "Content-Type", "X-Coach-Key"],
       allowMethods: ["GET", "POST", "PUT", "OPTIONS"],
     }),

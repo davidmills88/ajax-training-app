@@ -26,11 +26,11 @@ Lily (COS) owns end-to-end product and architecture decisions for this app. Davi
 | --- | --- | --- |
 | GitHub | `davidmills88` / Ajax Fitness owner | This repo |
 | Supabase (Auth + Postgres) | Same Ajax Fitness owner account | Live project `ajax-training-app`: M0 + `0002` + seed already applied (ops box). App still mocks if env is blank. |
-| API host | Vercel or Fly, same owner | Documented target. Local `npm run dev:api` is enough for M0. |
+| API host | Vercel or Fly, same owner | [Go-live](docs/go-live.md): Vercel function + env. Local `npm run dev:api` still works. |
 | Apple Developer | `david@ajaxgym.com` | Planned for TestFlight / Sign in with Apple. **Do not block M0** on creating the team. Apple Sign-In stays stubbed. |
 | Expo / EAS | `david@ajaxgym.com` Expo account | Placeholders in `apps/mobile` (`com.ajaxgym.training`, `eas.json` `preview`). **Do not block** on creating the account. Expo Go / web + mock auth is the default. |
 
-No live credentials belong in this repo. `.env.example` files use labeled placeholders only; copy to `.env` locally when a project exists. See [docs/supabase-setup.md](docs/supabase-setup.md).
+No live credentials belong in this repo. `.env.example` files use labeled placeholders only; copy to `.env` locally when a project exists. See [docs/go-live.md](docs/go-live.md) and [docs/supabase-setup.md](docs/supabase-setup.md).
 
 ## What M0 is
 
@@ -110,6 +110,10 @@ cp apps/mobile/.env.example apps/mobile/.env
 ```
 
 Paste URL + anon only. Never commit `SUPABASE_SERVICE_ROLE_KEY`. If `DATABASE_URL` is set but Postgres is down, the API stays on the in-memory mock.
+
+### Go live (public API)
+
+Vercel hosts the Hono function (`api/index.ts` → `/health` on the production host). Checklist, env keys (no values), and smoke curls: [docs/go-live.md](docs/go-live.md). Point Expo at that origin with `EXPO_PUBLIC_API_URL` + `EXPO_PUBLIC_USE_MOCK=0`. Do not commit real keys.
 
 ### Tests
 
@@ -224,7 +228,7 @@ apps/mobile       Expo app — login → consent → 9 sections → summary → 
 packages/shared   Onboarding, training types, intake mapper, M2 foundation generator, in-memory store
 fixtures/         Day-8 Foundation body + sample Dave intake JSON
 scripts/          Print/run coach create+assign (`assign-day8`, `assign:from-intake`)
-docs/             Supabase runbook, [Dave assign handoff](docs/dave-assign-handoff.md), [M2 generator](docs/m2-foundation-generator.md)
+docs/             [Go-live](docs/go-live.md), Supabase runbook, [Dave assign handoff](docs/dave-assign-handoff.md), [M2 generator](docs/m2-foundation-generator.md)
 supabase/         Postgres + RLS for tenants, roster, programs, workouts, assignments, logs
 ```
 

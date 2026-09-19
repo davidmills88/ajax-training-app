@@ -85,4 +85,4 @@ That replaces the member's active block. Seeded `Ajax Foundation — 6 weeks` re
 - Set `COACH_API_KEY` on the API if Pace should assign without a magic-link session.
 - Point `EXPO_PUBLIC_API_URL` at the deployed API before a device / TestFlight build.
 
-Schema work on live is done (`0002` + seed via ops box). Not required for this PR: Apple Developer login, EAS cloud build, Apple Sign-In, Wellyx, SMS, Stripe.
+Schema work on live is done (`0002` + seed via ops box). Public API host + Expo live env: [go-live.md](./go-live.md). Not required for this PR: Apple Developer login, EAS cloud build, Apple Sign-In, Wellyx, SMS, Stripe.

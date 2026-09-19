@@ -33,6 +33,7 @@ import {
 } from "@ajax/shared";
 import { nextStep } from "@ajax/shared";
 import pg from "pg";
+import { postgresPoolSsl } from "./postgres-ssl.js";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -521,7 +522,14 @@ function normalizeMetric(value: string | null | undefined, fallback: string | nu
 
 export async function tryCreatePostgresStore(): Promise<PostgresAjaxStore | null> {
   if (!process.env.DATABASE_URL) return null;
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const connectionString = process.env.DATABASE_URL;
+  const serverless = Boolean(process.env.VERCEL);
+  const max = Number.parseInt(process.env.PG_POOL_MAX ?? (serverless ? "1" : "10"), 10);
+  const pool = new pg.Pool({
+    connectionString,
+    ssl: postgresPoolSsl(connectionString),
+    max: Number.isFinite(max) && max > 0 ? max : serverless ? 1 : 10,
+  });
   try {
     await pool.query("select 1");
     return new PostgresAjaxStore(pool);
