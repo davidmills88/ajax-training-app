@@ -9,7 +9,7 @@ No secrets belong in git. Do not paste `COACH_API_KEY`, Supabase keys, or connec
 | Piece | Where |
 | --- | --- |
 | Intake JSON | Client Summary fields + optional `email` / `videos`. Schema below. Sample: [`fixtures/sample-intake.json`](../fixtures/sample-intake.json) |
-| Mapper | `blockFromIntake()` in `packages/shared/src/intake.ts` → valid `POST /coach/blocks` body |
+| Mapper | `blockFromIntake()` → `generateFoundationBlock()` ([m2-foundation-generator.md](./m2-foundation-generator.md)) → valid `POST /coach/blocks` body. `--skeleton` keeps the M1.2 overlay. |
 | Script | `npm run assign:from-intake` |
 | Day-8 fixture (no intake) | [`fixtures/day-8-foundation-6-week.json`](../fixtures/day-8-foundation-6-week.json) + `npm run assign:day8` |
 | Auth | Owner session `david@ajaxgym.com` **or** `X-Coach-Key` when `COACH_API_KEY` is set on the API |
@@ -57,7 +57,7 @@ Dave can POST or save a JSON object. Client Summary keys match onboarding (`buil
 | `clientSummary` | optional | Nested onboarding export; top-level keys win |
 | `videos.*` / `videoUrl` | optional | http(s) only. Slots: day 1 lower, day 3 upper, day 5 aerobic |
 
-The mapper always emits **6 weeks × 3 sessions (days 1 / 3 / 5)** using the Foundation movement skeleton. Goals, limitations, and recovery notes are written onto the program and workouts. This is a first-pass block, not periodization.
+The mapper always emits **6 weeks × 3 sessions (days 1 / 3 / 5)**. Default is the M2 first-pass generator (week themes + simple limitation swaps). Goals, limitations, equipment, and availability are written onto the program and workouts. Program notes include `M2 first pass — coach may swap`. This is still a first-pass block, not a full engine.
 
 Print the mapped body without calling the API (`-s` hides the npm banner so the output is valid JSON):
 
