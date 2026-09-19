@@ -34,7 +34,7 @@ export type WeekId = 1 | 2 | 3 | 4 | 5 | 6;
 export type LimitationFlags = Record<LimitationKind, boolean>;
 
 const PLACEHOLDER_VIDEOS: Record<IntakeSlot, string> = {
-  lower: "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
+  lower: "https://www.youtube.com/watch?v=MeIiIdhvXT4",
   upper: "https://www.youtube.com/watch?v=0G2_XV7slIg",
   aerobic: "https://www.youtube.com/watch?v=L_xrDAtykMI",
 };

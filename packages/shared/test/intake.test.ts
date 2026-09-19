@@ -34,7 +34,7 @@ describe("blockFromIntake", () => {
     assert.match(block.notes ?? "", new RegExp(M2_FIRST_PASS_MARK));
     assert.match(block.notes ?? "", /Ski-season durability/);
     assert.match(block.notes ?? "", /Old left knee sprain/);
-    assert.ok(block.workouts.some((row) => row.videoUrl?.includes("MxsSz_VZ4p4")));
+    assert.ok(block.workouts.some((row) => row.videoUrl?.includes("MeIiIdhvXT4")));
     assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Goal thread")));
     assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Watch:")));
     const names = block.workouts.flatMap((row) => (row.segments ?? []).map((segment) => segment.name));
