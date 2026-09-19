@@ -323,6 +323,10 @@ describe("ajax api", () => {
       assert.equal(homeBody.workouts.length, 18);
       assert.equal(homeBody.assignment.status, "active");
       assert.match(homeBody.program.notes, /Ski-season durability/);
+      assert.match(homeBody.program.notes, /M2 first pass — coach may swap/);
+      assert.equal(homeBody.workouts.filter((row: { day: number }) => row.day === 1).length, 6);
+      assert.equal(homeBody.workouts.filter((row: { day: number }) => row.day === 3).length, 6);
+      assert.equal(homeBody.workouts.filter((row: { day: number }) => row.day === 5).length, 6);
     } finally {
       if (previous === undefined) delete process.env.COACH_API_KEY;
       else process.env.COACH_API_KEY = previous;

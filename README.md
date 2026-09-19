@@ -14,7 +14,9 @@ M1 on main: an assigned 6-week block, workout detail with optional video, and a 
 
 M1.1 on main: EAS / Expo placeholders for a later TestFlight, live-Supabase docs + a Day-8 fixture the coach API can ingest. No Apple secrets. No required cloud build.
 
-M1.2 (this tree): Dave → assign handoff. Map Client Summary / intake JSON to a 6-week block and assign it without David. See [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md).
+M1.2 on main: Dave → assign handoff. Map Client Summary / intake JSON to a 6-week block and assign it without David. See [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md).
+
+M2.0 (this tree): first auto block from Client Summary — 6 weeks × 3 (days 1 / 3 / 5), week-theme templates, simple knee/shoulder/back swaps. Still coach-editable. See [docs/m2-foundation-generator.md](docs/m2-foundation-generator.md).
 
 ## Ownership & intended orgs
 
@@ -58,10 +60,16 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 ## What M1.2 is
 
 - **Dave handoff:** [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md) — create from intake, assign to a roster email, verify `GET /training`. David is not required.
-- **Intake mapper:** `blockFromIntake()` turns Client Summary JSON into a 6-week, 3×/week `POST /coach/blocks` skeleton (optional `videos`).
+- **Intake mapper:** `blockFromIntake()` turns Client Summary JSON into a 6-week, 3×/week `POST /coach/blocks` body (optional `videos`).
 - **Sample + script:** `fixtures/sample-intake.json` and `npm run assign:from-intake -- --email member@ajax.local --file fixtures/sample-intake.json`. Day-8 path unchanged: `fixtures/day-8-foundation-6-week.json` / `npm run assign:day8`.
 
-## What M0 / M1 / M1.2 are not
+## What M2.0 is
+
+- **First-pass generator:** `generateFoundationBlock(intake)` — 18 workouts, week themes settle → load → density → strength → power-ish → settle. [docs/m2-foundation-generator.md](docs/m2-foundation-generator.md).
+- **Limitation swaps:** knee / shoulder / back text on Client Summary remaps a few movements (e.g. no deep loaded lunges when a knee is mentioned).
+- **Same assign path:** `blockFromIntake()` and `npm run assign:from-intake` use the generator. `--skeleton` keeps the M1.2 DEMO_BLOCK overlay. Coach API is unchanged.
+
+## What M0 / M1 / M1.2 / M2.0 are not
 
 Auto programming engine, wearables ingest, Apple Sign-In, Wellyx, Stripe, Grok/GLM SMS, admin audit UI, Redis, TrainingPeaks API.
 
@@ -180,11 +188,12 @@ npm run assign:day8
 npm run assign:day8 -- --run --email member@ajax.local
 ```
 
-Dave / Client Summary → assigned block (no David): [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md).
+Dave / Client Summary → assigned block (no David): [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md). First-pass generator: [docs/m2-foundation-generator.md](docs/m2-foundation-generator.md).
 
 ```bash
 npm run assign:from-intake -- --file fixtures/sample-intake.json --email member@ajax.local
 npm run assign:from-intake -- --run --email member@ajax.local
+npm run assign:from-intake -- --skeleton --print-block
 ```
 
 ## EAS / TestFlight (preview)
@@ -212,10 +221,10 @@ Until then: Expo Go / `npm run dev:web` + the mock API.
 ```
 apps/api          Hono server — health, magic-link, roster, consent, onboarding, coach blocks, training logs
 apps/mobile       Expo app — login → consent → 9 sections → summary → assigned block (`eas.json` preview)
-packages/shared   Onboarding, training types, in-memory store + demo seed
+packages/shared   Onboarding, training types, intake mapper, M2 foundation generator, in-memory store
 fixtures/         Day-8 Foundation body + sample Dave intake JSON
 scripts/          Print/run coach create+assign (`assign-day8`, `assign:from-intake`)
-docs/             Supabase runbook + [Dave assign handoff](docs/dave-assign-handoff.md)
+docs/             Supabase runbook, [Dave assign handoff](docs/dave-assign-handoff.md), [M2 generator](docs/m2-foundation-generator.md)
 supabase/         Postgres + RLS for tenants, roster, programs, workouts, assignments, logs
 ```
 

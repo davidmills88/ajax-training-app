@@ -1,94 +1,31 @@
-import { emptyClientSummary } from "./onboarding.js";
+import { generateFoundationBlock } from "./foundation-block.js";
+import {
+  asTrimmed,
+  optionalUrl,
+  resolveIntakeSummary,
+  resolveIntakeVideos,
+  slotForWorkout,
+  validateIntake,
+  type DaveIntake,
+  type IntakeSlot,
+  type IntakeVideos,
+} from "./intake-core.js";
 import { DEMO_BLOCK, validateCreateBlock, type CreateBlockInput, type CreateWorkoutInput } from "./training.js";
 import type { ClientSummary } from "./types.js";
 
-/** Optional video URLs Dave / Pace can attach to the 3×/week skeleton slots. */
-export type IntakeVideos = {
-  lower?: string | null;
-  upper?: string | null;
-  aerobic?: string | null;
-  /** Used when a slot-specific URL is omitted. */
-  default?: string | null;
+export type { DaveIntake, IntakeSlot, IntakeVideos } from "./intake-core.js";
+export {
+  resolveIntakeEmail,
+  resolveIntakeSummary,
+  resolveIntakeVideos,
+  slotForWorkout,
+  validateIntake,
+} from "./intake-core.js";
+
+export type BlockFromIntakeOptions = {
+  /** M1.2 overlay of the Foundation DEMO_BLOCK. Default is the M2 generator. */
+  skeleton?: boolean;
 };
-
-/**
- * Minimal intake Dave (or onboarding) can hand to Pace.
- *
- * Client Summary keys match `buildClientSummary` / the member-editable summary.
- * Extra fields (`email`, `title`, `notes`, `videos`) are assign-handoff only.
- */
-export type DaveIntake = Partial<ClientSummary> & {
-  /** Roster email. The assign script `--email` wins when both are set. */
-  email?: string;
-  memberEmail?: string;
-  /** Override for `POST /coach/blocks` title. Default: `{name} — 6 weeks`. */
-  title?: string;
-  /** Extra coach notes appended after the compiled Client Summary. */
-  notes?: string;
-  /** Nested Client Summary (Dave may wrap the onboarding export). */
-  clientSummary?: Partial<ClientSummary>;
-  client_summary?: Partial<ClientSummary>;
-  videos?: IntakeVideos;
-  /** Alias for `videos.default`. */
-  videoUrl?: string | null;
-};
-
-export type IntakeSlot = "lower" | "upper" | "aerobic";
-
-const SUMMARY_KEYS: (keyof ClientSummary)[] = [
-  "name",
-  "ageGender",
-  "goals",
-  "trainingAvailability",
-  "equipmentAccess",
-  "limitationsInjuries",
-  "strengthsWeaknesses",
-  "recoveryNutritionNotes",
-  "coachingPreferences",
-];
-
-function asTrimmed(value: unknown): string {
-  if (value === undefined || value === null) return "";
-  return String(value).trim();
-}
-
-function optionalUrl(value: unknown): string | null {
-  const raw = asTrimmed(value);
-  return raw.length ? raw : null;
-}
-
-export function resolveIntakeSummary(intake: DaveIntake): ClientSummary {
-  const nested = intake.clientSummary ?? intake.client_summary ?? {};
-  const summary = emptyClientSummary();
-  for (const key of SUMMARY_KEYS) {
-    summary[key] = asTrimmed(intake[key]) || asTrimmed(nested[key]);
-  }
-  return summary;
-}
-
-export function resolveIntakeEmail(intake: DaveIntake): string {
-  return asTrimmed(intake.email) || asTrimmed(intake.memberEmail);
-}
-
-export function resolveIntakeVideos(intake: DaveIntake): IntakeVideos {
-  const videos = intake.videos ?? {};
-  return {
-    lower: optionalUrl(videos.lower),
-    upper: optionalUrl(videos.upper),
-    aerobic: optionalUrl(videos.aerobic),
-    default: optionalUrl(videos.default) ?? optionalUrl(intake.videoUrl),
-  };
-}
-
-export function slotForWorkout(workout: Pick<CreateWorkoutInput, "day" | "title">): IntakeSlot {
-  if (workout.day === 1) return "lower";
-  if (workout.day === 3) return "upper";
-  if (workout.day === 5) return "aerobic";
-  const title = workout.title.toLowerCase();
-  if (title.includes("lower") || title.includes("squat") || title.includes("hinge")) return "lower";
-  if (title.includes("upper") || title.includes("press") || title.includes("pull")) return "upper";
-  return "aerobic";
-}
 
 function videoForSlot(slot: IntakeSlot, videos: IntakeVideos): string | null {
   return optionalUrl(videos[slot]) ?? optionalUrl(videos.default);
@@ -142,30 +79,20 @@ function overlayWorkoutNotes(workout: CreateWorkoutInput, summary: ClientSummary
   return [base, ...extras].filter(Boolean).join(" ");
 }
 
-export function validateIntake(intake: DaveIntake): string[] {
-  const errors: string[] = [];
-  if (!intake || typeof intake !== "object" || Array.isArray(intake)) {
-    return ["Intake must be a JSON object."];
-  }
-  const summary = resolveIntakeSummary(intake);
-  if (!asTrimmed(intake.title) && !summary.name && !summary.goals) {
-    errors.push("Provide a title, name, or goals so the block can be labeled.");
-  }
-  const videos = resolveIntakeVideos(intake);
-  for (const [key, url] of Object.entries(videos)) {
-    if (!url) continue;
-    if (!/^https?:\/\//i.test(url)) {
-      errors.push(`videos.${key} must be an http(s) URL.`);
-    }
-  }
-  return errors;
-}
-
 /**
  * Map Dave / Client Summary intake to a `POST /coach/blocks` body.
- * Always 6 weeks × 3 sessions (days 1 / 3 / 5) using the Foundation skeleton.
+ * Default: M2 first-pass generator (6 weeks × days 1 / 3 / 5, limitation swaps).
+ * Pass `{ skeleton: true }` for the M1.2 DEMO_BLOCK overlay.
  */
-export function blockFromIntake(intake: DaveIntake): CreateBlockInput {
+export function blockFromIntake(intake: DaveIntake, options?: BlockFromIntakeOptions): CreateBlockInput {
+  if (options?.skeleton) {
+    return blockFromIntakeSkeleton(intake);
+  }
+  return generateFoundationBlock(intake);
+}
+
+/** M1.2 overlay: Foundation DEMO_BLOCK plus Client Summary notes. Used by `--skeleton`. */
+export function blockFromIntakeSkeleton(intake: DaveIntake): CreateBlockInput {
   const errors = validateIntake(intake);
   if (errors.length) {
     throw new Error(errors.join(" "));

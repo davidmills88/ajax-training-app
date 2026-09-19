@@ -5,6 +5,7 @@
  *   npm run assign:from-intake
  *   npm run assign:from-intake -- --file fixtures/sample-intake.json --email member@ajax.local
  *   npm run assign:from-intake -- --print-block
+ *   npm run assign:from-intake -- --skeleton --print-block
  *   npm run assign:from-intake -- --run --email member@ajax.local
  *
  * Live Auth: set COACH_API_KEY on the API and here. Mock magic-link sessions
@@ -25,6 +26,7 @@ const DEFAULT_FILE = resolve(ROOT, "fixtures/sample-intake.json");
 type Args = {
   run: boolean;
   printBlock: boolean;
+  skeleton: boolean;
   file: string;
   email: string | undefined;
   baseUrl: string;
@@ -32,11 +34,12 @@ type Args = {
 };
 
 function usage(): string {
-  return `Usage: assign-from-intake [--print|--run|--print-block] [--file PATH] [--email EMAIL] [--base-url URL]
+  return `Usage: assign-from-intake [--print|--run|--print-block] [--skeleton] [--file PATH] [--email EMAIL] [--base-url URL]
 
   --print         Print the curl flow (default). Does not call the API.
   --run           Map intake, POST /coach/blocks, assign, then GET /training.
   --print-block   Print the mapped POST /coach/blocks JSON only.
+  --skeleton      Use the M1.2 DEMO_BLOCK overlay instead of the M2 generator.
   --file          Intake JSON (default: fixtures/sample-intake.json)
   --email         Roster email to assign (default: intake.email or member@ajax.local)
   --base-url      API origin (default: $AJAX_API_URL or http://localhost:8787)
@@ -49,6 +52,7 @@ function parseArgs(argv: string[]): Args {
   const args: Args = {
     run: false,
     printBlock: false,
+    skeleton: false,
     file: process.env.AJAX_INTAKE_FILE || DEFAULT_FILE,
     email: process.env.AJAX_ASSIGN_EMAIL,
     baseUrl: process.env.AJAX_API_URL || "http://localhost:8787",
@@ -59,6 +63,7 @@ function parseArgs(argv: string[]): Args {
     if (arg === "--print") args.run = false;
     else if (arg === "--run") args.run = true;
     else if (arg === "--print-block") args.printBlock = true;
+    else if (arg === "--skeleton") args.skeleton = true;
     else if (arg === "--file" || arg === "--intake") {
       args.file = argv[++i] ?? "";
     } else if (arg === "--email") {
@@ -114,12 +119,14 @@ function printFlow(args: Args, file: string, email: string): void {
     lines.push("# Auth: X-Coach-Key from $COACH_API_KEY", "");
   }
   lines.push(
-    "# 2. Map intake → POST /coach/blocks body, then create",
-    `#    npm run assign:from-intake -- --print-block --file ${file}`,
+    args.skeleton
+      ? "# 2. Map intake → POST /coach/blocks body (M1.2 skeleton), then create"
+      : "# 2. Map intake → POST /coach/blocks body (M2 first pass), then create",
+    `#    npm run assign:from-intake -- --print-block${args.skeleton ? " --skeleton" : ""} --file ${file}`,
     `PROGRAM_ID=$(curl -sS ${base}/coach/blocks \\`,
     coachHeadersPrint(),
     "  -H 'Content-Type: application/json' \\",
-    `  --data-binary @<(npm run -s assign:from-intake -- --print-block --file ${file}) | python3 -c "import sys,json; print(json.load(sys.stdin)['program']['id'])")`,
+    `  --data-binary @<(npm run -s assign:from-intake -- --print-block${args.skeleton ? " --skeleton" : ""} --file ${file}) | python3 -c "import sys,json; print(json.load(sys.stdin)['program']['id'])")`,
     "",
     "# 3. Assign to a roster member (replaces their active block)",
     `curl -sS ${base}/coach/blocks/$PROGRAM_ID/assign \\`,
@@ -230,7 +237,7 @@ async function main(): Promise<void> {
   const file = resolve(args.file);
   const intake = loadIntake(file);
   const email = args.email?.trim() || resolveIntakeEmail(intake) || "member@ajax.local";
-  const block = blockFromIntake(intake);
+  const block = blockFromIntake(intake, { skeleton: args.skeleton });
 
   if (args.printBlock) {
     console.log(JSON.stringify(block, null, 2));
