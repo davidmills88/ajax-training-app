@@ -333,6 +333,109 @@ describe("ajax api", () => {
     }
   });
 
+  it("assigns from intake in one POST with X-Coach-Key (Dave handoff)", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const created = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local", intake: sampleIntake }),
+      });
+      assert.equal(created.status, 201);
+      const createdBody = await created.json();
+      assert.equal(createdBody.program.title, "Demo Member — 6 weeks");
+      assert.equal(createdBody.workouts.length, 18);
+      assert.equal(createdBody.assignment.memberEmail, "member@ajax.local");
+      assert.equal(createdBody.assignment.status, "active");
+      assert.match(createdBody.program.notes, /M2 first pass — coach may swap/);
+
+      const memberLogin = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      const token = (await memberLogin.json()).session.accessToken as string;
+      const home = await app.request("/training", { headers: { Authorization: `Bearer ${token}` } });
+      assert.equal(home.status, 200);
+      const homeBody = await home.json();
+      assert.equal(homeBody.program.title, "Demo Member — 6 weeks");
+      assert.equal(homeBody.workouts.length, 18);
+      assert.equal(homeBody.assignment.status, "active");
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("accepts a flat sample-intake.json body on /coach/assign-from-intake", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const created = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify(sampleIntake),
+      });
+      assert.equal(created.status, 201);
+      const body = await created.json();
+      assert.equal(body.assignment.memberEmail, "member@ajax.local");
+      assert.equal(body.workouts.length, 18);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("rejects assign-from-intake without a roster email or a label", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const noEmail = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "No Email Yet", goals: "Ski" }),
+      });
+      assert.equal(noEmail.status, 400);
+      assert.equal((await noEmail.json()).error, "invalid_email");
+
+      const empty = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local", intake: {} }),
+      });
+      assert.equal(empty.status, 400);
+      assert.equal((await empty.json()).error, "invalid_intake");
+
+      const unknown = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "not-a-member@example.com", name: "Ghost", goals: "Ski" }),
+      });
+      assert.equal(unknown.status, 400);
+      assert.equal((await unknown.json()).error, "not_on_roster");
+
+      const memberLogin = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      const memberToken = (await memberLogin.json()).session.accessToken as string;
+      const forbidden = await app.request("/coach/assign-from-intake", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${memberToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(sampleIntake),
+      });
+      assert.equal(forbidden.status, 403);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
   it("rejects a mismatched X-Coach-Key when COACH_API_KEY is set", async () => {
     const previous = process.env.COACH_API_KEY;
     process.env.COACH_API_KEY = "test-coach-key";

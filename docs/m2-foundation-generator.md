@@ -2,7 +2,7 @@
 
 Thin auto block from Client Summary / Dave intake. **Not** a full programming engine: no wearables, no readiness, no auto-progression from logs.
 
-`generateFoundationBlock(intake)` in `packages/shared/src/foundation-block.ts` returns a `CreateBlockInput` for the existing coach API (`POST /coach/blocks` + assign). Dave / Pace keep the same assign path.
+`generateFoundationBlock(intake)` in `packages/shared/src/foundation-block.ts` returns a `CreateBlockInput` for the existing coach API. Dave / Pace call `POST /coach/assign-from-intake` (or `POST /coach/blocks` + assign).
 
 ## What it emits
 
@@ -27,6 +27,12 @@ Equipment (`limited` / `home` / mixed travel) only remaps kit after safety swaps
 ## Same assign path
 
 ```bash
+# Dave after Client Summary (preferred HTTP)
+curl -sS "${AJAX_API_URL:-https://ajax-training-app.vercel.app}/coach/assign-from-intake" \
+  -H "X-Coach-Key: $COACH_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-binary @fixtures/sample-intake.json
+
 npm run assign:from-intake -- --file fixtures/sample-intake.json --email member@ajax.local
 npm run assign:from-intake -- --run --email member@ajax.local
 npm run -s assign:from-intake -- --print-block --file fixtures/sample-intake.json

@@ -2,7 +2,7 @@
 
 Ship the Hono API on Vercel and point Expo at that origin plus the existing `ajax-training-app` Supabase project. **This PR does not deploy for you** (no Vercel token in CI / this agent). After merge, Pace sets Vercel env from the ops box and deploys.
 
-Out of scope here: EAS / TestFlight, Apple Sign-In, Day-8 SMS, Dave auto-assign changes, Wellyx.
+Out of scope here: EAS / TestFlight, Apple Sign-In, Day-8 SMS, Wellyx. Dave assign after Client Summary: [dave-assign-handoff.md](./dave-assign-handoff.md).
 
 No secrets belong in git. Copy keys from the ops box file pattern `/workspace/ajax-training-app.env` (or the same names in `apps/api/.env`) — **values stay on the ops box / Vercel only**.
 
@@ -77,7 +77,16 @@ export COACH_API_KEY=…          # same value as Vercel — not committed
 npm run assign:from-intake -- --run --email member@ajax.local --file fixtures/sample-intake.json
 ```
 
-That script POSTs `/coach/blocks`, assigns, then `GET /training`. Use a roster email. Live Auth does not return a mock session; the script uses `X-Coach-Key` when `COACH_API_KEY` is set.
+That script POSTs `/coach/assign-from-intake` (create + assign), then tries `GET /training`. Use a roster email. Live Auth does not return a mock session (`otp_failed` is expected); `--run` still exits 0 after a successful assign. The script uses `X-Coach-Key` when `COACH_API_KEY` is set.
+
+Dave one-liner (same key, no SMS/email):
+
+```bash
+curl -sS https://YOUR-API/coach/assign-from-intake \
+  -H "X-Coach-Key: $COACH_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-binary @fixtures/sample-intake.json
+```
 
 Manual `GET /training` after a member OTP (paste the access token from Supabase / the app):
 

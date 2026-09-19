@@ -15,12 +15,15 @@ import type { ClientSummary } from "./types.js";
 
 export type { DaveIntake, IntakeSlot, IntakeVideos } from "./intake-core.js";
 export {
+  magicLinkVerifySkipReason,
+  parseAssignFromIntakeBody,
   resolveIntakeEmail,
   resolveIntakeSummary,
   resolveIntakeVideos,
   slotForWorkout,
   validateIntake,
 } from "./intake-core.js";
+export type { AssignFromIntakeRequest } from "./intake-core.js";
 
 export type BlockFromIntakeOptions = {
   /** M1.2 overlay of the Foundation DEMO_BLOCK. Default is the M2 generator. */

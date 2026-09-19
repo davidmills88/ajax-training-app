@@ -2,10 +2,13 @@ import {
   AjaxStoreError,
   AJAX_TENANT_ID,
   CONSENT_COPY,
+  blockFromIntake,
   isCoachRole,
   isOnboardingSectionId,
   ONBOARDING_SECTIONS,
+  parseAssignFromIntakeBody,
   recapSection,
+  resolveIntakeEmail,
   type ConsentQuestionnaire,
   type CreateBlockInput,
   type LogWorkoutInput,
@@ -267,6 +270,37 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
     }
     const assignment = await store.assignBlock(coach, c.req.param("id"), email);
     return c.json({ assignment });
+  });
+
+  /**
+   * Dave / Pace: Client Summary JSON → create block + assign in one call.
+   * Does not send SMS, email, or magic-link. Verify GET /training separately if needed.
+   */
+  app.post("/coach/assign-from-intake", async (c) => {
+    const coach = await requireCoach(c);
+    const body = await c.req.json<unknown>().catch(() => null);
+    let parsed;
+    try {
+      parsed = parseAssignFromIntakeBody(body);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Intake must be a JSON object.";
+      return c.json({ error: "invalid_intake", message }, 400);
+    }
+    const email = parsed.email || resolveIntakeEmail(parsed.intake);
+    if (!email.includes("@")) {
+      return c.json({ error: "invalid_email", message: "Enter the member's roster email." }, 400);
+    }
+    let block: CreateBlockInput;
+    try {
+      block = blockFromIntake(parsed.intake, { skeleton: parsed.skeleton });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Invalid intake.";
+      return c.json({ error: "invalid_intake", message }, 400);
+    }
+    const program = await store.createBlock(coach, block);
+    const assignment = await store.assignBlock(coach, program.id, email);
+    const detail = await store.getBlock(coach, program.id);
+    return c.json({ program: detail.program, workouts: detail.workouts, assignment }, 201);
   });
 
   app.get("/training", async (c) => {

@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import {
   M2_FIRST_PASS_MARK,
   blockFromIntake,
+  magicLinkVerifySkipReason,
+  parseAssignFromIntakeBody,
   resolveIntakeEmail,
   validateCreateBlock,
   validateIntake,
@@ -67,6 +69,30 @@ describe("blockFromIntake", () => {
   it("rejects an empty intake and a non-http video URL", () => {
     assert.match(validateIntake({}).join(" "), /title, name, or goals/);
     assert.match(validateIntake({ name: "A", videos: { lower: "notaurl" } }).join(" "), /http/);
+  });
+
+  it("parses a flat Dave body and a nested { email, intake } wrapper", () => {
+    const flat = parseAssignFromIntakeBody(sampleIntake);
+    assert.equal(flat.email, "member@ajax.local");
+    assert.equal(flat.skeleton, false);
+    assert.equal(flat.intake.name, "Demo Member");
+
+    const nested = parseAssignFromIntakeBody({
+      email: "seth@ajaxgym.com",
+      skeleton: true,
+      intake: { name: "Seth", goals: "Quiet strength" },
+    });
+    assert.equal(nested.email, "seth@ajaxgym.com");
+    assert.equal(nested.skeleton, true);
+    assert.equal(nested.intake.name, "Seth");
+    assert.equal(nested.intake.goals, "Quiet strength");
+  });
+
+  it("treats live magic-link otp_failed as a skip, not a hard failure", () => {
+    assert.match(magicLinkVerifySkipReason(502, { error: "otp_failed" }) ?? "", /otp_failed/);
+    assert.match(magicLinkVerifySkipReason(200, { sent: true }) ?? "", /did not return a session/);
+    assert.equal(magicLinkVerifySkipReason(403, { error: "not_on_roster" }), null);
+    assert.equal(magicLinkVerifySkipReason(200, { session: { accessToken: "t" } }), null);
   });
 
   it("creates, assigns, and lists the mapped block for the member", () => {

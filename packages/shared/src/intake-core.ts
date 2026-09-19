@@ -70,6 +70,49 @@ export function resolveIntakeEmail(intake: DaveIntake): string {
   return asTrimmed(intake.email) || asTrimmed(intake.memberEmail);
 }
 
+export type AssignFromIntakeRequest = {
+  intake: DaveIntake;
+  email: string;
+  skeleton: boolean;
+};
+
+/**
+ * Dave / Pace body for POST /coach/assign-from-intake.
+ * Accepts a flat Client Summary (sample-intake.json) or `{ email, intake, skeleton? }`.
+ */
+export function parseAssignFromIntakeBody(body: unknown): AssignFromIntakeRequest {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new Error("Intake must be a JSON object.");
+  }
+  const rec = body as Record<string, unknown>;
+  const nested = rec.intake;
+  const hasNested = Boolean(nested && typeof nested === "object" && !Array.isArray(nested));
+  const intake = (hasNested ? { ...(nested as DaveIntake) } : { ...(body as DaveIntake) }) as DaveIntake;
+  if (!hasNested) {
+    delete (intake as { skeleton?: unknown }).skeleton;
+  }
+  const email = asTrimmed(rec.email) || asTrimmed(rec.memberEmail) || resolveIntakeEmail(intake);
+  return { intake, email, skeleton: rec.skeleton === true };
+}
+
+/**
+ * GET /training after assign is best-effort. Live Supabase often returns otp_failed
+ * (no session). Callers should treat a non-null reason as a warning and still succeed.
+ */
+export function magicLinkVerifySkipReason(status: number, body: unknown): string | null {
+  const rec = body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+  if (rec.error === "otp_failed") {
+    return "magic-link OTP was not sent (otp_failed). Assign succeeded; GET /training is optional.";
+  }
+  if (status === 502) {
+    return "magic-link OTP failed (502). Assign succeeded; GET /training is optional.";
+  }
+  if (status >= 200 && status < 300 && rec.session == null) {
+    return "magic-link did not return a session (live Auth). Assign succeeded; GET /training is optional.";
+  }
+  return null;
+}
+
 export function resolveIntakeVideos(intake: DaveIntake): IntakeVideos {
   const videos = intake.videos ?? {};
   return {
