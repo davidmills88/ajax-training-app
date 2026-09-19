@@ -13,7 +13,7 @@ No secrets belong in git. Copy keys from the ops box file pattern `/workspace/aj
 3. **Root Directory:** leave the repository root (uses root `vercel.json` + `api/index.ts`).
    - Alternative: set Root Directory to `apps/api` (uses `apps/api/vercel.json` + `apps/api/api/index.ts`). Same function either way.
 4. **Node.js:** 20.x (repo `engines`).
-5. Do **not** enable a frontend framework. The rewrite sends every path to the Hono function so `GET /health` is `/health` on the host, not `/api/health`.
+5. Do **not** enable a frontend framework (or Hono auto-detect). `vercel.json` sets `"framework": null` so Vercel uses the `api/` function, not local `src/index.ts` (`serve()`). The rewrite sends every path to that Node function (`@hono/node-server/vercel` + `pg`) so `GET /health` is `/health` on the host, not `/api/health`.
 
 Install/build are already in `vercel.json` (`npm ci` + workspace typecheck). First deploy can fail until env is set — that is expected if you want a green health check against live Postgres.
 

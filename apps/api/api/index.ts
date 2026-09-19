@@ -1,4 +1,5 @@
-import { handle } from "hono/vercel";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { handle as nodeHandle } from "@hono/node-server/vercel";
 import { createRuntimeApp } from "../src/server.js";
 
 export const config = {
@@ -6,5 +7,10 @@ export const config = {
 };
 
 const { app } = await createRuntimeApp();
+const asNode = nodeHandle(app);
 
-export default handle(app);
+/** Web Fetch (Fluid / hono/vercel style) or classic Node (req, res). */
+export default function handler(req: Request | IncomingMessage, res?: ServerResponse) {
+  if (res) return asNode(req as IncomingMessage, res);
+  return app.fetch(req as Request);
+}
