@@ -41,7 +41,7 @@ cp apps/mobile/.env.example apps/mobile/.env
 | `SUPABASE_URL` | API | Yes — magic-link OTP. |
 | `SUPABASE_ANON_KEY` | API | Yes — public anon key for OTP. |
 | `SUPABASE_SERVICE_ROLE_KEY` | API only | Flips `runtimeMode()` to live. **Server-only. Never commit.** |
-| `COACH_API_KEY` | API | Optional. When set, Pace can `POST /coach/blocks` with `X-Coach-Key` (needed for the assign script against live Auth). |
+| `COACH_API_KEY` | API | Optional. When set, Pace / Dave can `POST /coach/blocks` and `POST /coach/assign-from-intake` with `X-Coach-Key` (needed against live Auth). |
 | `AJAX_TENANT_SLUG` | API | Defaults to `ajax`. |
 | `PORT` | API | Defaults to `8787`. |
 | `EXPO_PUBLIC_API_URL` | Mobile | Live API origin (not `localhost` on a device). |

@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Map Dave / Client Summary intake → POST /coach/blocks, then print or run assign.
+ * Map Dave / Client Summary intake → POST /coach/assign-from-intake (create + assign).
  *
  *   npm run assign:from-intake
  *   npm run assign:from-intake -- --file fixtures/sample-intake.json --email member@ajax.local
@@ -8,14 +8,15 @@
  *   npm run assign:from-intake -- --skeleton --print-block
  *   npm run assign:from-intake -- --run --email member@ajax.local
  *
- * Live Auth: set COACH_API_KEY on the API and here. Mock magic-link sessions
- * are not returned when the API is in live Auth mode.
+ * Live Auth: set COACH_API_KEY on the API and here. GET /training verify is
+ * best-effort — otp_failed does not fail --run after a successful assign.
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   blockFromIntake,
+  magicLinkVerifySkipReason,
   resolveIntakeEmail,
   type DaveIntake,
 } from "../packages/shared/src/intake.js";
@@ -36,8 +37,8 @@ type Args = {
 function usage(): string {
   return `Usage: assign-from-intake [--print|--run|--print-block] [--skeleton] [--file PATH] [--email EMAIL] [--base-url URL]
 
-  --print         Print the curl flow (default). Does not call the API.
-  --run           Map intake, POST /coach/blocks, assign, then GET /training.
+  --print         Print the Dave curl (default). Does not call the API.
+  --run           POST /coach/assign-from-intake, then optional GET /training.
   --print-block   Print the mapped POST /coach/blocks JSON only.
   --skeleton      Use the M1.2 DEMO_BLOCK overlay instead of the M2 generator.
   --file          Intake JSON (default: fixtures/sample-intake.json)
@@ -45,7 +46,9 @@ function usage(): string {
   --base-url      API origin (default: $AJAX_API_URL or http://localhost:8787)
 
 Auth: if $COACH_API_KEY is set, requests send X-Coach-Key. Otherwise --run
-signs in as $AJAX_COACH_EMAIL via POST /auth/magic-link (mock mode only).`;
+signs in as $AJAX_COACH_EMAIL via POST /auth/magic-link (mock mode only).
+
+GET /training after assign is optional. Live otp_failed exits 0 with a warning.`;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -101,15 +104,16 @@ function coachHeadersPrint(): string {
 function printFlow(args: Args, file: string, email: string): void {
   const base = args.baseUrl.replace(/\/$/, "");
   const lines: string[] = [
-    "# Dave intake → create + assign + verify",
+    "# Dave Client Summary → create + assign (no David, no SMS/email)",
     `# Intake:  ${file}`,
     `# API:     ${base}`,
     `# Member:  ${email}`,
     "",
+    "# Preferred: one POST after Client Summary is ready.",
   ];
   if (!process.env.COACH_API_KEY) {
     lines.push(
-      "# 1. Mock owner session (skip if COACH_API_KEY is set on the API)",
+      "# Mock owner session (skip if COACH_API_KEY is set on the API)",
       `TOKEN=$(curl -sS ${base}/auth/magic-link \\`,
       "  -H 'Content-Type: application/json' \\",
       `  -d '{"email":"${args.coachEmail}"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")`,
@@ -120,34 +124,23 @@ function printFlow(args: Args, file: string, email: string): void {
   }
   lines.push(
     args.skeleton
-      ? "# 2. Map intake → POST /coach/blocks body (M1.2 skeleton), then create"
-      : "# 2. Map intake → POST /coach/blocks body (M2 first pass), then create",
-    `#    npm run assign:from-intake -- --print-block${args.skeleton ? " --skeleton" : ""} --file ${file}`,
-    `PROGRAM_ID=$(curl -sS ${base}/coach/blocks \\`,
+      ? "# Nested body if the file has no email, or to pass --skeleton"
+      : "# Flat sample-intake.json already includes email. Override with --email via jq:",
+    `curl -sS ${base}/coach/assign-from-intake \\`,
     coachHeadersPrint(),
     "  -H 'Content-Type: application/json' \\",
-    `  --data-binary @<(npm run -s assign:from-intake -- --print-block${args.skeleton ? " --skeleton" : ""} --file ${file}) | python3 -c "import sys,json; print(json.load(sys.stdin)['program']['id'])")`,
+    email && !args.skeleton
+      ? `  --data-binary @<(jq --arg email '${email}' '. + {email: $email}' ${file})`
+      : `  --data-binary @<(jq --arg email '${email}' --argjson skeleton ${args.skeleton ? "true" : "false"} '{email: $email, skeleton: $skeleton, intake: .}' ${file})`,
     "",
-    "# 3. Assign to a roster member (replaces their active block)",
-    `curl -sS ${base}/coach/blocks/$PROGRAM_ID/assign \\`,
-    coachHeadersPrint(),
-    "  -H 'Content-Type: application/json' \\",
-    `  -d '{"email":"${email}"}'`,
+    "# Equivalent: npm run assign:from-intake -- --run --email " + email + " --file " + file,
     "",
-    "# 4. Verify the member sees the block",
-    `MEMBER=$(curl -sS ${base}/auth/magic-link \\`,
-    "  -H 'Content-Type: application/json' \\",
-    `  -d '{"email":"${email}"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")`,
-    `curl -sS ${base}/training -H "Authorization: Bearer $MEMBER"`,
+    "# GET /training is optional. Live magic-link often returns otp_failed — ignore after assign.",
   );
   console.log(lines.join("\n"));
 }
 
-async function jsonRequest(
-  url: string,
-  init: { method?: string; headers?: Record<string, string>; body?: string },
-): Promise<unknown> {
-  const response = await fetch(url, init);
+async function readJsonResponse(response: Response): Promise<{ status: number; text: string; parsed: unknown }> {
   const text = await response.text();
   let parsed: unknown = text;
   try {
@@ -155,10 +148,7 @@ async function jsonRequest(
   } catch {
     /* keep text */
   }
-  if (!response.ok) {
-    throw new Error(`${init.method ?? "GET"} ${url} → ${response.status}: ${text}`);
-  }
-  return parsed;
+  return { status: response.status, text, parsed };
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -168,27 +158,45 @@ function asRecord(value: unknown): Record<string, unknown> {
   throw new Error(`Expected object, got: ${JSON.stringify(value)}`);
 }
 
-async function runFlow(args: Args, block: ReturnType<typeof blockFromIntake>, email: string): Promise<void> {
-  const base = args.baseUrl.replace(/\/$/, "");
-  const coachKey = process.env.COACH_API_KEY;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+async function jsonRequest(
+  url: string,
+  init: { method?: string; headers?: Record<string, string>; body?: string },
+): Promise<unknown> {
+  const response = await fetch(url, init);
+  const { status, text, parsed } = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(`${init.method ?? "GET"} ${url} → ${status}: ${text}`);
+  }
+  return parsed;
+}
 
+async function coachHeaders(args: Args, base: string): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const coachKey = process.env.COACH_API_KEY;
   if (coachKey) {
     headers["X-Coach-Key"] = coachKey;
     console.error("Auth: X-Coach-Key");
-  } else {
-    console.error(`Signing in as ${args.coachEmail} (mock magic-link)…`);
-    const login = asRecord(
-      await jsonRequest(`${base}/auth/magic-link`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: args.coachEmail }),
-      }),
-    );
-    const session = asRecord(login.session);
-    headers.Authorization = `Bearer ${String(session.accessToken)}`;
+    return headers;
   }
+  console.error(`Signing in as ${args.coachEmail} (mock magic-link)…`);
+  const login = asRecord(
+    await jsonRequest(`${base}/auth/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: args.coachEmail }),
+    }),
+  );
+  const session = asRecord(login.session);
+  headers.Authorization = `Bearer ${String(session.accessToken)}`;
+  return headers;
+}
 
+async function createAndAssignFallback(
+  base: string,
+  headers: Record<string, string>,
+  block: ReturnType<typeof blockFromIntake>,
+  email: string,
+): Promise<unknown> {
   console.error(`Creating block "${block.title}" from intake…`);
   const created = asRecord(
     await jsonRequest(`${base}/coach/blocks`, {
@@ -203,25 +211,33 @@ async function runFlow(args: Args, block: ReturnType<typeof blockFromIntake>, em
   console.error(`Created ${String(program.title)} (${String(program.id)}) with ${count} sessions.`);
 
   console.error(`Assigning to ${email}…`);
-  const assigned = await jsonRequest(`${base}/coach/blocks/${String(program.id)}/assign`, {
+  return jsonRequest(`${base}/coach/blocks/${String(program.id)}/assign`, {
     method: "POST",
     headers,
     body: JSON.stringify({ email }),
   });
-  console.log(JSON.stringify(assigned, null, 2));
+}
 
-  console.error(`Verifying GET /training as ${email}…`);
-  const memberLogin = asRecord(
-    await jsonRequest(`${base}/auth/magic-link`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    }),
-  );
-  const memberSession = asRecord(memberLogin.session);
+async function verifyMemberTraining(base: string, email: string): Promise<{ skipped: boolean }> {
+  console.error(`Verifying GET /training as ${email} (best-effort)…`);
+  const loginResponse = await fetch(`${base}/auth/magic-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const login = await readJsonResponse(loginResponse);
+  const skip = magicLinkVerifySkipReason(login.status, login.parsed);
+  if (skip) {
+    console.error(`Warning: ${skip}`);
+    return { skipped: true };
+  }
+  if (!loginResponse.ok) {
+    throw new Error(`POST ${base}/auth/magic-link → ${login.status}: ${login.text}`);
+  }
+  const session = asRecord(asRecord(login.parsed).session);
   const training = asRecord(
     await jsonRequest(`${base}/training`, {
-      headers: { Authorization: `Bearer ${String(memberSession.accessToken)}` },
+      headers: { Authorization: `Bearer ${String(session.accessToken)}` },
     }),
   );
   const trainingProgram = asRecord(training.program);
@@ -229,7 +245,45 @@ async function runFlow(args: Args, block: ReturnType<typeof blockFromIntake>, em
   console.error(
     `Member home: ${String(trainingProgram.title)} · ${trainingWorkouts.length} sessions · assignment ${asRecord(training.assignment).status}`,
   );
-  console.log(JSON.stringify({ program: training.program, assignment: training.assignment, workoutCount: trainingWorkouts.length }, null, 2));
+  console.log(
+    JSON.stringify(
+      { program: training.program, assignment: training.assignment, workoutCount: trainingWorkouts.length },
+      null,
+      2,
+    ),
+  );
+  return { skipped: false };
+}
+
+async function runFlow(args: Args, intake: DaveIntake, email: string): Promise<void> {
+  const base = args.baseUrl.replace(/\/$/, "");
+  const headers = await coachHeaders(args, base);
+  const payload = { email, skeleton: args.skeleton, intake };
+
+  console.error(`POST /coach/assign-from-intake as ${email}…`);
+  const response = await fetch(`${base}/coach/assign-from-intake`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  const result = await readJsonResponse(response);
+
+  if (response.status === 404) {
+    console.error("POST /coach/assign-from-intake not deployed; falling back to create + assign.");
+    const assigned = await createAndAssignFallback(base, headers, blockFromIntake(intake, { skeleton: args.skeleton }), email);
+    console.log(JSON.stringify(assigned, null, 2));
+  } else if (!response.ok) {
+    throw new Error(`POST ${base}/coach/assign-from-intake → ${result.status}: ${result.text}`);
+  } else {
+    const assigned = asRecord(result.parsed);
+    const program = asRecord(assigned.program);
+    const workouts = assigned.workouts;
+    const count = Array.isArray(workouts) ? workouts.length : 0;
+    console.error(`Assigned ${String(program.title)} (${String(program.id)}) · ${count} sessions.`);
+    console.log(JSON.stringify(assigned, null, 2));
+  }
+
+  await verifyMemberTraining(base, email);
 }
 
 async function main(): Promise<void> {
@@ -244,7 +298,7 @@ async function main(): Promise<void> {
     return;
   }
   if (args.run) {
-    await runFlow(args, block, email);
+    await runFlow(args, intake, email);
     return;
   }
   printFlow(args, file, email);

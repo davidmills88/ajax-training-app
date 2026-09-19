@@ -48,7 +48,7 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 - **Member home:** after onboarding, the member sees the active block by week/day, with optional `video_url`.
 - **Result log:** weight, reps, score, notes, and mark complete. One log per workout per assignment.
 - **Seed:** `member@ajax.local` already has the demo “Ajax Foundation — 6 weeks” block. In mock mode that member is also marked onboarding-complete so home is immediate.
-- **Coach API:** `POST /coach/blocks` + `POST /coach/blocks/:id/assign`. Owner session (`david@ajaxgym.com`) or `X-Coach-Key` when `COACH_API_KEY` is set.
+- **Coach API:** `POST /coach/blocks` + `POST /coach/blocks/:id/assign`, plus Dave's `POST /coach/assign-from-intake` (intake JSON → create + assign). Owner session (`david@ajaxgym.com`) or `X-Coach-Key` when `COACH_API_KEY` is set.
 - **Day-8 fixture:** `fixtures/day-8-foundation-6-week.json` (18 sessions, 3×/week). Print or run the curl flow with `npm run assign:day8`.
 
 ## What M1.1 is
@@ -59,7 +59,7 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 
 ## What M1.2 is
 
-- **Dave handoff:** [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md) — create from intake, assign to a roster email, verify `GET /training`. David is not required.
+- **Dave handoff:** [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md) — after Client Summary, `POST /coach/assign-from-intake` (or `npm run assign:from-intake -- --run`). David is not required. Live `otp_failed` on magic-link does not fail assign.
 - **Intake mapper:** `blockFromIntake()` turns Client Summary JSON into a 6-week, 3×/week `POST /coach/blocks` body (optional `videos`).
 - **Sample + script:** `fixtures/sample-intake.json` and `npm run assign:from-intake -- --email member@ajax.local --file fixtures/sample-intake.json`. Day-8 path unchanged: `fixtures/day-8-foundation-6-week.json` / `npm run assign:day8`.
 
@@ -67,7 +67,7 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 
 - **First-pass generator:** `generateFoundationBlock(intake)` — 18 workouts, week themes settle → load → density → strength → power-ish → settle. [docs/m2-foundation-generator.md](docs/m2-foundation-generator.md).
 - **Limitation swaps:** knee / shoulder / back text on Client Summary remaps a few movements (e.g. no deep loaded lunges when a knee is mentioned).
-- **Same assign path:** `blockFromIntake()` and `npm run assign:from-intake` use the generator. `--skeleton` keeps the M1.2 DEMO_BLOCK overlay. Coach API is unchanged.
+- **Same assign path:** `blockFromIntake()` and `POST /coach/assign-from-intake` / `npm run assign:from-intake` use the generator. `--skeleton` keeps the M1.2 DEMO_BLOCK overlay.
 
 ## What M0 / M1 / M1.2 / M2.0 are not
 
@@ -165,7 +165,7 @@ curl -s http://localhost:8787/coach/blocks/PROGRAM_ID/assign \
   -d '{"email":"member@ajax.local"}'
 ```
 
-If `COACH_API_KEY` is set on the API, Pace can skip the owner session and send the same bodies with `X-Coach-Key: $COACH_API_KEY`.
+If `COACH_API_KEY` is set on the API, Pace / Dave can skip the owner session and send the same bodies with `X-Coach-Key: $COACH_API_KEY`. After Client Summary, Dave should call `POST /coach/assign-from-intake` (intake JSON + roster email) instead of the two-step create + assign. See [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md).
 
 Member (auth-gated):
 
@@ -223,11 +223,11 @@ Until then: Expo Go / `npm run dev:web` + the mock API.
 ## Repo map
 
 ```
-apps/api          Hono server — health, magic-link, roster, consent, onboarding, coach blocks, training logs
+apps/api          Hono server — health, magic-link, roster, consent, onboarding, coach blocks, Dave assign-from-intake, training logs
 apps/mobile       Expo app — login → consent → 9 sections → summary → assigned block (`eas.json` preview)
 packages/shared   Onboarding, training types, intake mapper, M2 foundation generator, in-memory store
 fixtures/         Day-8 Foundation body + sample Dave intake JSON
-scripts/          Print/run coach create+assign (`assign-day8`, `assign:from-intake`)
+scripts/          Print/run coach create+assign (`assign-day8`, `assign:from-intake` → `/coach/assign-from-intake`)
 docs/             [Go-live](docs/go-live.md), Supabase runbook, [Dave assign handoff](docs/dave-assign-handoff.md), [M2 generator](docs/m2-foundation-generator.md)
 supabase/         Postgres + RLS for tenants, roster, programs, workouts, assignments, logs
 ```
