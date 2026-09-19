@@ -8,6 +8,7 @@ import {
   type IntakeSlot,
   type IntakeVideos,
 } from "./intake-core.js";
+import { videoForMovementOrFallback } from "./movement-videos.js";
 import { validateCreateBlock, type CreateBlockInput, type CreateWorkoutInput, type WorkoutSegment } from "./training.js";
 import type { ClientSummary } from "./types.js";
 
@@ -33,7 +34,7 @@ export type WeekId = 1 | 2 | 3 | 4 | 5 | 6;
 export type LimitationFlags = Record<LimitationKind, boolean>;
 
 const PLACEHOLDER_VIDEOS: Record<IntakeSlot, string> = {
-  lower: "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
+  lower: "https://www.youtube.com/watch?v=MeIiIdhvXT4",
   upper: "https://www.youtube.com/watch?v=0G2_XV7slIg",
   aerobic: "https://www.youtube.com/watch?v=L_xrDAtykMI",
 };
@@ -105,6 +106,8 @@ type TemplateSegment = {
   /** Needs external load; limited-equipment members get a bodyweight / bag swap. */
   load?: boolean;
   avoid?: Partial<Record<LimitationKind, SegmentOverride>>;
+  /** Catalog lookup when the display name is generic (Press, Row, Zone 2). */
+  videoKey?: string;
 };
 
 export function detectLimitations(text: string): LimitationFlags {
@@ -275,7 +278,7 @@ function applySegment(
   flags: LimitationFlags,
   equipment: EquipmentKind,
   band: DurationBand,
-  videoUrl: string | null,
+  slotVideo: string | null,
 ): { segment: WorkoutSegment; swap: string | null } {
   let name = template.name;
   let prescription = template.prescription;
@@ -310,6 +313,11 @@ function applySegment(
   if (band === "short") notes.push("Short session: keep rests honest and skip the extra grind.");
   if (band === "long") notes.push("Longer session: one extra quality set, not junk volume.");
 
+  const videoUrl = videoForMovementOrFallback(
+    name,
+    videoForMovementOrFallback(template.videoKey ?? template.name, slotVideo),
+  );
+
   return {
     segment: {
       name,
@@ -321,12 +329,62 @@ function applySegment(
   };
 }
 
+const WGS_AVOID: TemplateSegment["avoid"] = {
+  knee: {
+    name: "Hip 90/90",
+    notes: "Knee limitation: no deep lunge stretch. 90/90 stays friendly.",
+    prescription: "2 × 45s / side",
+  },
+  back: {
+    name: "Cat-cow + child's pose",
+    notes: "Back limitation: skip the loaded twist. Breathe into the ribs.",
+    prescription: "4 breaths each",
+  },
+};
+
+const CARRY_AVOID: TemplateSegment["avoid"] = {
+  shoulder: {
+    name: "Suitcase carry",
+    notes: "Shoulder limitation: lighter suitcase carry, ribs stacked. Stop if the shrug takes over.",
+  },
+  back: {
+    name: "Suitcase carry",
+    notes: "Back limitation: one light bag. Walk tall, no lean.",
+  },
+};
+
+function warmupLower(): TemplateSegment[] {
+  return [
+    {
+      name: "Easy bike or walk",
+      prescription: "5 min",
+      notes: "Nasal if you can. This is just to get warm.",
+    },
+    {
+      name: "World's greatest stretch",
+      prescription: "2 / side",
+      avoid: WGS_AVOID,
+    },
+    { name: "Glute bridge", prescription: "2 × 8", notes: "Pause at the top. Ribs down." },
+    { name: "Ankle rocks", prescription: "2 × 8 / side" },
+  ];
+}
+
+function warmupUpper(): TemplateSegment[] {
+  return [
+    { name: "Easy bike or walk", prescription: "5 min", notes: "Unhurried. Shake the arms out." },
+    { name: "Band pull-apart", prescription: "2 × 12", notes: "Long spine. Stop if the shrug takes over." },
+    { name: "Cat-cow", prescription: "6 breaths" },
+  ];
+}
+
 function lowerTemplates(week: WeekId): TemplateSegment[] {
   const squat: TemplateSegment = {
     name: week <= 2 ? "Goblet squat" : week === 3 ? "Front-loaded squat" : "Squat pattern",
     prescription: week === 1 || week === 2 ? "3 × 8" : week === 3 ? "4 × 6" : week === 4 ? "4 × 5" : "3 × 5",
     notes: week === 1 ? "Pause one breath at the bottom." : undefined,
     load: true,
+    videoKey: week <= 2 ? "goblet squat" : week === 3 ? "front-loaded squat" : "squat pattern",
     avoid: {
       knee: {
         name: "Sit-to-stand to a high box",
@@ -344,6 +402,7 @@ function lowerTemplates(week: WeekId): TemplateSegment[] {
     prescription: week <= 3 ? "3 × 6" : "3 × 5",
     notes: "Soft knees, long spine.",
     load: true,
+    videoKey: "romanian deadlift",
     avoid: {
       back: {
         name: "Supported hip hinge",
@@ -357,16 +416,26 @@ function lowerTemplates(week: WeekId): TemplateSegment[] {
     },
   };
 
+  const calf: TemplateSegment = { name: "Calf raise", prescription: week === 3 ? "3 × 10" : "2 × 12" };
+  const core: TemplateSegment = {
+    name: "Dead bug",
+    prescription: "2 × 6 / side",
+    notes: "Low back stays quiet on the floor.",
+  };
+  const finish: TemplateSegment = {
+    name: week >= 4 ? "Farmer carry" : "Suitcase carry",
+    prescription: week >= 4 ? "2 × 30m" : "2 × 20m",
+    load: true,
+    avoid: CARRY_AVOID,
+  };
+
   if (week === 1 || week === 3 || week === 6) {
-    return [
-      squat,
-      hinge,
-      { name: "Calf raise", prescription: week === 3 ? "3 × 10" : "2 × 12" },
-    ];
+    return [...warmupLower(), squat, hinge, calf, core, finish];
   }
 
   if (week === 2) {
     return [
+      ...warmupLower(),
       squat,
       hinge,
       {
@@ -381,11 +450,14 @@ function lowerTemplates(week: WeekId): TemplateSegment[] {
           },
         },
       },
+      core,
+      finish,
     ];
   }
 
   if (week === 4) {
     return [
+      ...warmupLower(),
       squat,
       hinge,
       {
@@ -399,10 +471,13 @@ function lowerTemplates(week: WeekId): TemplateSegment[] {
           },
         },
       },
+      core,
+      finish,
     ];
   }
 
   return [
+    ...warmupLower(),
     squat,
     {
       name: "Box step-up",
@@ -432,6 +507,8 @@ function lowerTemplates(week: WeekId): TemplateSegment[] {
         },
       },
     },
+    core,
+    { ...finish, name: "Suitcase carry", prescription: "2 × 20m" },
   ];
 }
 
@@ -440,6 +517,7 @@ function upperTemplates(week: WeekId): TemplateSegment[] {
     name: week <= 3 ? "Dumbbell bench press" : "Press",
     prescription: week <= 2 ? "3 × 8" : week === 3 ? "4 × 6" : week === 4 ? "4 × 5" : "3 × 5",
     load: true,
+    videoKey: "dumbbell bench press",
     avoid: {
       shoulder: {
         name: "Floor press",
@@ -453,6 +531,7 @@ function upperTemplates(week: WeekId): TemplateSegment[] {
     prescription:
       week === 1 ? "3 × 8" : week === 2 ? "3 × 10" : week === 3 ? "3 × 8 / side" : week === 4 ? "4 × 6" : "3 × 6",
     load: true,
+    videoKey: week <= 2 ? "chest-supported row" : "single-arm row",
     avoid: {
       back: {
         name: "Chest-supported row",
@@ -462,8 +541,28 @@ function upperTemplates(week: WeekId): TemplateSegment[] {
     },
   };
 
+  const sidePlank: TemplateSegment = {
+    name: "Side plank",
+    prescription: "2 × 20s / side",
+    notes: "Hips stacked. Stop if the low back takes over.",
+    avoid: {
+      back: {
+        name: "Dead bug",
+        notes: "Back limitation: swapped side plank for a quiet dead bug.",
+        prescription: "2 × 6 / side",
+      },
+    },
+  };
+
+  const pallof: TemplateSegment = {
+    name: "Pallof press",
+    prescription: "2 × 8 / side",
+    notes: "Anti-rotation. Ribs stacked.",
+  };
+
   if (week === 1 || week === 3) {
     return [
+      ...warmupUpper(),
       press,
       row,
       {
@@ -481,41 +580,70 @@ function upperTemplates(week: WeekId): TemplateSegment[] {
           },
         },
       },
+      { name: "Face pull", prescription: "2 × 12" },
+      sidePlank,
+      {
+        name: "Suitcase carry",
+        prescription: "2 × 20m",
+        load: true,
+        avoid: CARRY_AVOID,
+      },
     ];
   }
 
   if (week === 2) {
-    return [press, row, { name: "Face pull", prescription: "2 × 12" }];
+    return [
+      ...warmupUpper(),
+      press,
+      row,
+      { name: "Face pull", prescription: "2 × 12" },
+      pallof,
+      sidePlank,
+      {
+        name: "Suitcase carry",
+        prescription: "2 × 20m",
+        load: true,
+        avoid: CARRY_AVOID,
+      },
+    ];
   }
 
   return [
+    ...warmupUpper(),
     press,
     row,
     {
       name: week === 5 ? "Farmer carry" : "Carry",
       prescription: week === 5 ? "3 × 30m" : "2 × 30m",
       load: true,
-      avoid: {
-        shoulder: {
-          name: "Suitcase carry",
-          notes: "Shoulder limitation: lighter suitcase carry, ribs stacked. Stop if the shrug takes over.",
-        },
-        back: {
-          name: "Suitcase carry",
-          notes: "Back limitation: one light bag. Walk tall, no lean.",
-        },
-      },
+      videoKey: "farmer carry",
+      avoid: CARRY_AVOID,
+    },
+    { name: "Face pull", prescription: "2 × 12" },
+    sidePlank,
+    {
+      name: "Easy bike or walk",
+      prescription: "6–8 min",
+      notes: "Conversational. Shake the arms out.",
     },
   ];
 }
 
 function aerobicTemplates(week: WeekId): TemplateSegment[] {
+  const walkIn: TemplateSegment = {
+    name: "Easy walk-in",
+    prescription: "5 min",
+    notes: "Arrive unhurried.",
+    videoKey: "zone 2",
+  };
+
   const zone2: TemplateSegment = {
     name: "Zone 2",
     prescription:
       week === 1 ? "30–40 min walk, bike, or ski-erg" : week === 2 ? "35–45 min" : week === 3 ? "40–50 min" : week === 4 ? "40 min" : week === 5 ? "40–45 min" : "30–40 min",
     notes: week === 6 ? "Easy finish. Write a short note for your coach." : undefined,
     load: true,
+    videoKey: "zone 2",
   };
 
   const mobility: TemplateSegment =
@@ -527,18 +655,7 @@ function aerobicTemplates(week: WeekId): TemplateSegment[] {
           ? {
               name: "World's greatest stretch",
               prescription: "2 / side",
-              avoid: {
-                knee: {
-                  name: "Hip 90/90",
-                  notes: "Knee limitation: no deep lunge stretch. 90/90 stays friendly.",
-                  prescription: "2 × 45s / side",
-                },
-                back: {
-                  name: "Cat-cow + child's pose",
-                  notes: "Back limitation: skip the loaded twist. Breathe into the ribs.",
-                  prescription: "4 breaths each",
-                },
-              },
+              avoid: WGS_AVOID,
             }
           : week === 4
             ? { name: "Ankle rocks", prescription: "2 × 10 / side" }
@@ -546,13 +663,71 @@ function aerobicTemplates(week: WeekId): TemplateSegment[] {
               ? { name: "Breathing reset", prescription: "5 min nasal, slow" }
               : { name: "Full-body mobility", prescription: "8–10 min" };
 
-  return [zone2, mobility];
+  const extra: TemplateSegment =
+    week === 1
+      ? { name: "Couch stretch", prescription: "2 × 40s / side" }
+      : week === 2
+        ? { name: "Hip 90/90", prescription: "2 × 45s / side" }
+        : week === 5
+          ? { name: "Hip 90/90", prescription: "2 × 45s / side" }
+          : week === 6
+            ? { name: "Couch stretch", prescription: "2 × 40s / side" }
+            : { name: "Cat-cow", prescription: "6 breaths" };
+
+  const closer: TemplateSegment =
+    week === 5
+      ? { name: "Easy walk-out", prescription: "5 min", notes: "Unhurried. Write a word for how the week felt.", videoKey: "zone 2" }
+      : { name: "Breathing reset", prescription: "5 min nasal, slow" };
+
+  return [walkIn, zone2, mobility, extra, closer];
 }
 
 function templatesFor(slot: IntakeSlot, week: WeekId): TemplateSegment[] {
   if (slot === "lower") return lowerTemplates(week);
   if (slot === "upper") return upperTemplates(week);
   return aerobicTemplates(week);
+}
+
+export function foundationWeekNotes(slot: IntakeSlot, week: WeekId): string {
+  return WEEK_NOTES[slot][week];
+}
+
+export type FoundationWorkoutContext = {
+  flags: LimitationFlags;
+  equipment: EquipmentKind;
+  band: DurationBand;
+  videos: IntakeVideos;
+  notesFor: (slot: IntakeSlot, week: WeekId, swaps: string[]) => string;
+};
+
+/** Shared 18-session builder used by the generator and the Day-8 / seed DEMO_BLOCK. */
+export function buildFoundationWorkouts(ctx: FoundationWorkoutContext): CreateWorkoutInput[] {
+  const workouts: CreateWorkoutInput[] = [];
+  let sortOrder = 0;
+  for (let week = 1; week <= FOUNDATION_DURATION_WEEKS; week += 1) {
+    const weekId = week as WeekId;
+    for (const day of FOUNDATION_SESSION_DAYS) {
+      const slot = slotForDay(day);
+      const slotVideo = videoForSlot(slot, ctx.videos);
+      const swapNotes: string[] = [];
+      const segments = templatesFor(slot, weekId).map((template) => {
+        const applied = applySegment(template, ctx.flags, ctx.equipment, ctx.band, slotVideo);
+        if (applied.swap) swapNotes.push(applied.swap);
+        return applied.segment;
+      });
+      workouts.push({
+        week: weekId,
+        day,
+        sortOrder,
+        title: WEEK_TITLES[slot][weekId],
+        notes: ctx.notesFor(slot, weekId, swapNotes),
+        videoUrl: slotVideo,
+        segments,
+      });
+      sortOrder += 1;
+    }
+  }
+  return workouts;
 }
 
 /**
@@ -571,31 +746,13 @@ export function generateFoundationBlock(intake: DaveIntake): CreateBlockInput {
   const equipment = detectEquipment(summary.equipmentAccess);
   const band = detectDurationBand(summary.trainingAvailability);
 
-  const workouts: CreateWorkoutInput[] = [];
-  let sortOrder = 0;
-  for (let week = 1; week <= FOUNDATION_DURATION_WEEKS; week += 1) {
-    const weekId = week as WeekId;
-    for (const day of FOUNDATION_SESSION_DAYS) {
-      const slot = slotForDay(day);
-      const videoUrl = videoForSlot(slot, videos);
-      const swapNotes: string[] = [];
-      const segments = templatesFor(slot, weekId).map((template) => {
-        const applied = applySegment(template, flags, equipment, band, videoUrl);
-        if (applied.swap) swapNotes.push(applied.swap);
-        return applied.segment;
-      });
-      workouts.push({
-        week: weekId,
-        day,
-        sortOrder,
-        title: WEEK_TITLES[slot][weekId],
-        notes: overlayWorkoutNotes(slot, weekId, summary, flags, equipment, swapNotes),
-        videoUrl,
-        segments,
-      });
-      sortOrder += 1;
-    }
-  }
+  const workouts = buildFoundationWorkouts({
+    flags,
+    equipment,
+    band,
+    videos,
+    notesFor: (slot, weekId, swapNotes) => overlayWorkoutNotes(slot, weekId, summary, flags, equipment, swapNotes),
+  });
 
   const block: CreateBlockInput = {
     title: defaultTitle(summary, intake),

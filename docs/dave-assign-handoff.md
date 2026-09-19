@@ -208,7 +208,18 @@ npm run assign:day8
 npm run assign:day8 -- --run --email member@ajax.local
 ```
 
-Fixture path: `fixtures/day-8-foundation-6-week.json` (already a `POST /coach/blocks` body). Live DB already has this seed as **Ajax Foundation — 6 weeks** for `member@ajax.local`; `--run` assigns a new active row and leaves the seed inactive.
+Fixture path: `fixtures/day-8-foundation-6-week.json` (already a `POST /coach/blocks` body). Each of the 18 sessions is a full Ajax-style list (warm-up, main lifts, accessories, conditioning) and **every segment has an `https` `videoUrl`**. Live DB already has this seed as **Ajax Foundation — 6 weeks** for `member@ajax.local`; `--run` assigns a new active row and leaves the seed inactive.
+
+In the app, tap **Video** on an exercise (or **Watch the session**) to open an in-app modal with an embedded YouTube player. The clip does not leave the app (`Linking.openURL` is not the primary path). Close dismisses the popup.
+
+**Demo for David (mock API):**
+
+```bash
+npm run dev:api
+# Expo / web: sign in as member@ajax.local — seed is already assigned.
+# Or re-assign the full Day-8 body:
+npm run assign:day8 -- --run --email member@ajax.local
+```
 
 ## Out of scope
 

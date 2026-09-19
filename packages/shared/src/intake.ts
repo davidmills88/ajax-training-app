@@ -10,7 +10,8 @@ import {
   type IntakeSlot,
   type IntakeVideos,
 } from "./intake-core.js";
-import { DEMO_BLOCK, validateCreateBlock, type CreateBlockInput, type CreateWorkoutInput } from "./training.js";
+import { DEMO_BLOCK } from "./demo-block.js";
+import { validateCreateBlock, type CreateBlockInput, type CreateWorkoutInput } from "./training.js";
 import type { ClientSummary } from "./types.js";
 
 export type { DaveIntake, IntakeSlot, IntakeVideos } from "./intake-core.js";

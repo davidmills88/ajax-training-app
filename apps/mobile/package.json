@@ -20,6 +20,7 @@
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
     "react-native-web": "~0.20.0",
+    "react-native-webview": "13.13.5",
     "@expo/metro-runtime": "~5.0.4"
   },
   "devDependencies": {

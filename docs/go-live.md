@@ -182,3 +182,7 @@ Open the Expo Go tunnel link (`exp://…` or the Expo project URL). Sign-in with
 2. Tap **Demo sign-in (coach)** only if `EXPO_PUBLIC_DEMO_COACH_KEY` is set in the local Expo env (same value as `COACH_API_KEY`; do not commit it).
 
 Do not put `COACH_API_KEY` or `EXPO_PUBLIC_DEMO_COACH_KEY` in git.
+
+### Full 6-week block + in-app video popup
+
+The seeded / Day-8 Foundation block is a complete 6-week × 3 session program. Every exercise has a public YouTube `videoUrl`. On WorkoutScreen, **Video** (per exercise) and **Watch the session** open an in-app modal (`VideoPopup`) with an embedded player — not an external browser. Close dismisses it. Assign or refresh the block with `npm run assign:day8 -- --run --email member@ajax.local`. See [dave-assign-handoff.md](./dave-assign-handoff.md).
