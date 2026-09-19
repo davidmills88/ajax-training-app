@@ -25,7 +25,7 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
     "*",
     cors({
       origin: "*",
-      allowHeaders: ["Authorization", "Content-Type"],
+      allowHeaders: ["Authorization", "Content-Type", "X-Coach-Key"],
       allowMethods: ["GET", "POST", "PUT", "OPTIONS"],
     }),
   );
@@ -50,7 +50,10 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
   async function requireCoach(c: { req: { header: (name: string) => string | undefined } }) {
     const serviceKey = process.env.COACH_API_KEY;
     const provided = c.req.header("X-Coach-Key") ?? "";
-    if (serviceKey && provided && provided === serviceKey) {
+    if (provided && serviceKey) {
+      if (provided !== serviceKey) {
+        throw new AjaxStoreError("unauthorized", "Coach key is not valid.");
+      }
       const coach: SessionUser = {
         id: "svc_coach",
         tenantId: store.tenantId || AJAX_TENANT_ID,

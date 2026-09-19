@@ -3,16 +3,16 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { emptyConsentQuestionnaire, ONBOARDING_SECTIONS } from "@ajax/shared";
+import { blockFromIntake, emptyConsentQuestionnaire, ONBOARDING_SECTIONS, type DaveIntake } from "@ajax/shared";
 import { createApp } from "../src/app.js";
 
-const day8Fixture = JSON.parse(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures/day-8-foundation-6-week.json"), "utf8"),
-) as {
+const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures");
+const day8Fixture = JSON.parse(readFileSync(join(fixturesDir, "day-8-foundation-6-week.json"), "utf8")) as {
   title: string;
   durationWeeks: number;
   workouts: { week: number; day: number; title: string; videoUrl?: string | null }[];
 };
+const sampleIntake = JSON.parse(readFileSync(join(fixturesDir, "sample-intake.json"), "utf8")) as DaveIntake;
 
 function filledSection(id: number) {
   const section = ONBOARDING_SECTIONS.find((s) => s.id === id)!;
@@ -279,6 +279,67 @@ describe("ajax api", () => {
       const homeBody = await home.json();
       assert.equal(homeBody.program.title, "Day 8 Foundation — 6 weeks");
       assert.equal(homeBody.workouts.length, 18);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("maps sample intake, creates and assigns with X-Coach-Key, then the member lists the block", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const block = blockFromIntake(sampleIntake);
+      assert.equal(block.workouts.length, 18);
+
+      const created = await app.request("/coach/blocks", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify(block),
+      });
+      assert.equal(created.status, 201);
+      const createdBody = await created.json();
+      assert.equal(createdBody.program.title, "Demo Member — 6 weeks");
+      assert.equal(createdBody.workouts.length, 18);
+
+      const assigned = await app.request(`/coach/blocks/${createdBody.program.id}/assign`, {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      assert.equal(assigned.status, 200);
+
+      const memberLogin = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "member@ajax.local" }),
+      });
+      const token = (await memberLogin.json()).session.accessToken as string;
+      const home = await app.request("/training", { headers: { Authorization: `Bearer ${token}` } });
+      assert.equal(home.status, 200);
+      const homeBody = await home.json();
+      assert.equal(homeBody.program.title, "Demo Member — 6 weeks");
+      assert.equal(homeBody.workouts.length, 18);
+      assert.equal(homeBody.assignment.status, "active");
+      assert.match(homeBody.program.notes, /Ski-season durability/);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
+  });
+
+  it("rejects a mismatched X-Coach-Key when COACH_API_KEY is set", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const res = await app.request("/coach/blocks", {
+        method: "POST",
+        headers: { "X-Coach-Key": "wrong-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Nope", workouts: [{ week: 1, day: 1, title: "x" }] }),
+      });
+      assert.equal(res.status, 401);
     } finally {
       if (previous === undefined) delete process.env.COACH_API_KEY;
       else process.env.COACH_API_KEY = previous;

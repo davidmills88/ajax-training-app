@@ -1,0 +1,69 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+import {
+  blockFromIntake,
+  resolveIntakeEmail,
+  validateCreateBlock,
+  validateIntake,
+  type DaveIntake,
+} from "../src/index.js";
+import { InMemoryAjaxStore } from "../src/store.js";
+
+const sampleIntake = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures/sample-intake.json"), "utf8"),
+) as DaveIntake;
+
+describe("blockFromIntake", () => {
+  it("maps the sample Client Summary fixture to a 6-week 3×/week coach body", () => {
+    assert.deepEqual(validateIntake(sampleIntake), []);
+    assert.equal(resolveIntakeEmail(sampleIntake), "member@ajax.local");
+
+    const block = blockFromIntake(sampleIntake);
+    assert.deepEqual(validateCreateBlock(block), []);
+    assert.equal(block.title, "Demo Member — 6 weeks");
+    assert.equal(block.durationWeeks, 6);
+    assert.equal(block.workouts.length, 18);
+    const days = new Set(block.workouts.map((row) => row.day));
+    assert.deepEqual([...days].sort(), [1, 3, 5]);
+    assert.match(block.notes ?? "", /Ski-season durability/);
+    assert.match(block.notes ?? "", /Old left knee sprain/);
+    assert.ok(block.workouts.some((row) => row.videoUrl?.includes("MxsSz_VZ4p4")));
+    assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Goal thread")));
+    assert.ok(block.workouts.some((row) => (row.notes ?? "").includes("Watch:")));
+  });
+
+  it("accepts a nested clientSummary and optional title override", () => {
+    const block = blockFromIntake({
+      title: "Day-8 custom — 6 weeks",
+      email: "seth@ajaxgym.com",
+      clientSummary: {
+        name: "Seth",
+        goals: "Quiet strength",
+        limitationsInjuries: "Cranky left shoulder",
+      },
+    });
+    assert.equal(block.title, "Day-8 custom — 6 weeks");
+    assert.match(block.notes ?? "", /Quiet strength/);
+    assert.match(block.notes ?? "", /Cranky left shoulder/);
+  });
+
+  it("rejects an empty intake and a non-http video URL", () => {
+    assert.match(validateIntake({}).join(" "), /title, name, or goals/);
+    assert.match(validateIntake({ name: "A", videos: { lower: "notaurl" } }).join(" "), /http/);
+  });
+
+  it("creates, assigns, and lists the mapped block for the member", () => {
+    const store = new InMemoryAjaxStore();
+    const coach = store.issueSession("david@ajaxgym.com").user;
+    const program = store.createBlock(coach, blockFromIntake(sampleIntake));
+    const assignment = store.assignBlock(coach, program.id, "member@ajax.local");
+    const home = store.getTrainingHome(store.issueSession("member@ajax.local").user);
+    assert.equal(home.program?.title, "Demo Member — 6 weeks");
+    assert.equal(home.workouts.length, 18);
+    assert.equal(assignment.status, "active");
+    assert.ok(home.workouts[0].notes.includes("Ski-season"));
+  });
+});

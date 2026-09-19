@@ -1,0 +1,18 @@
+{
+  "email": "member@ajax.local",
+  "name": "Demo Member",
+  "ageGender": "38 / woman",
+  "goals": "Ski-season durability · Quiet strength — Stay on snow without blowing up.",
+  "trainingAvailability": "3 days/week · About 60 minutes · Morning",
+  "equipmentAccess": "Ajax gym access",
+  "limitationsInjuries": "Old left knee sprain. Avoid deep loaded lunges if it chatters.",
+  "strengthsWeaknesses": "Consistent walker. Hinge pattern needs coaching.",
+  "recoveryNutritionNotes": "Sleep: 7 hours · Stress: Moderate · Nutrition: Intuitive · Sauna after ski days.",
+  "coachingPreferences": "Longevity-focused · Structured templates · Brief summary",
+  "notes": "Dave first pass from Client Summary. Swap any session that does not match the knee before week 1.",
+  "videos": {
+    "lower": "https://www.youtube.com/watch?v=MxsSz_VZ4p4",
+    "upper": "https://www.youtube.com/watch?v=0G2_XV7slIg",
+    "aerobic": "https://www.youtube.com/watch?v=L_xrDAtykMI"
+  }
+}
