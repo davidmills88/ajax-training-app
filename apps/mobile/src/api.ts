@@ -17,9 +17,20 @@ import {
   type WorkoutDetail,
   type WorkoutLog,
 } from "@ajax/shared";
+import Constants from "expo-constants";
 
-const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787").replace(/\/$/, "");
-const FORCE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === "1";
+type Extra = {
+  apiUrl?: string;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
+  useMock?: string;
+};
+
+const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
+
+const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? extra.apiUrl ?? "http://localhost:8787").replace(/\/$/, "");
+const useMockFlag = process.env.EXPO_PUBLIC_USE_MOCK ?? extra.useMock ?? "1";
+const FORCE_MOCK = useMockFlag === "1";
 
 const local = new InMemoryAjaxStore();
 let localUserToken: string | null = null;
