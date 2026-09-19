@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { createApp } from "../src/app.js";
 import { extraCorsOrigins, isAllowedCorsOrigin, resolveCorsOrigin } from "../src/cors.js";
 import { postgresPoolSsl } from "../src/postgres-ssl.js";
 import { createRuntimeApp } from "../src/server.js";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("postgres ssl for live Supabase", () => {
   it("enables rejectUnauthorized:false for supabase hosts without NODE_TLS_REJECT_UNAUTHORIZED", () => {
@@ -107,5 +112,32 @@ describe("runtime bootstrap", () => {
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.mode, "mock");
+  });
+});
+
+describe("vercel api-only project config", () => {
+  function assertApiOnlyVercelJson(config: {
+    framework: unknown;
+    buildCommand: unknown;
+    outputDirectory: unknown;
+    rewrites?: { source: string; destination: string }[];
+    functions?: Record<string, unknown>;
+  }) {
+    assert.equal(config.framework, null);
+    assert.equal(config.buildCommand, null);
+    assert.equal(config.outputDirectory, null);
+    const rewrite = config.rewrites?.find((row) => row.destination === "/api");
+    assert.ok(rewrite, "expected a rewrite to /api so GET /health is not /api/health");
+    assert.ok(config.functions?.["api/index.ts"], "expected the Hono serverless entry");
+  }
+
+  it("root vercel.json skips the static public output and routes to api/index.ts", () => {
+    const config = JSON.parse(readFileSync(join(repoRoot, "vercel.json"), "utf8"));
+    assertApiOnlyVercelJson(config);
+  });
+
+  it("apps/api vercel.json matches the same serverless-only settings", () => {
+    const config = JSON.parse(readFileSync(join(repoRoot, "apps/api/vercel.json"), "utf8"));
+    assertApiOnlyVercelJson(config);
   });
 });
