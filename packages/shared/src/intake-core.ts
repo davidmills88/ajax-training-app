@@ -101,14 +101,17 @@ export function parseAssignFromIntakeBody(body: unknown): AssignFromIntakeReques
  */
 export function magicLinkVerifySkipReason(status: number, body: unknown): string | null {
   const rec = body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+  if (rec.error === "otp_rate_limited" || status === 429) {
+    return "magic-link OTP is rate-limited (otp_rate_limited). Assign succeeded; mint POST /auth/coach-session or skip GET /training.";
+  }
   if (rec.error === "otp_failed") {
-    return "magic-link OTP was not sent (otp_failed). Assign succeeded; GET /training is optional.";
+    return "magic-link OTP was not sent (otp_failed). Assign succeeded; mint POST /auth/coach-session or skip GET /training.";
   }
   if (status === 502) {
-    return "magic-link OTP failed (502). Assign succeeded; GET /training is optional.";
+    return "magic-link OTP failed (502). Assign succeeded; mint POST /auth/coach-session or skip GET /training.";
   }
   if (status >= 200 && status < 300 && rec.session == null) {
-    return "magic-link did not return a session (live Auth). Assign succeeded; GET /training is optional.";
+    return "magic-link did not return a session (live Auth). Assign succeeded; mint POST /auth/coach-session or skip GET /training.";
   }
   return null;
 }

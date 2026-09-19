@@ -195,3 +195,15 @@ describe("vercel api-only project config", () => {
     assertApiOnlyVercelJson(config);
   });
 });
+
+describe("go-live demo docs", () => {
+  it("documents coach-session for a live walkthrough without email OTP", () => {
+    const docs = readFileSync(join(repoRoot, "docs/go-live.md"), "utf8");
+    assert.match(docs, /## 7\. Demo the app/);
+    assert.match(docs, /\/auth\/coach-session/);
+    assert.match(docs, /X-Coach-Key/);
+    assert.match(docs, /member@ajax\.local/);
+    assert.match(docs, /expo start --tunnel/);
+    assert.match(docs, /GET \/training/);
+  });
+});

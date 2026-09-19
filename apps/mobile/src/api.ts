@@ -24,6 +24,7 @@ type Extra = {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   useMock?: string;
+  demoCoachKey?: string;
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
@@ -90,6 +91,11 @@ async function localHandle<T>(path: string, init: RequestInit, token?: string | 
     const session = local.issueSession(String(body.email ?? ""));
     localUserToken = session.accessToken;
     return { sent: true, mock: true, message: "Mock mode: signed in locally.", session } as T;
+  }
+  if (path === "/auth/coach-session" && method === "POST") {
+    const session = local.issueSession(String(body.email ?? ""));
+    localUserToken = session.accessToken;
+    return { sent: true, mock: false, demo: true, message: "Demo session minted locally.", session } as T;
   }
   if (path === "/auth/apple" && method === "POST") {
     throw new AjaxStoreError("not_found", "Apple Sign-In is stubbed for a later milestone.");
@@ -161,8 +167,29 @@ async function localHandle<T>(path: string, init: RequestInit, token?: string | 
   throw new AjaxStoreError("not_found", `Unknown local path ${method} ${path}`);
 }
 
-export async function sendMagicLink(email: string): Promise<{ session?: Session; message: string }> {
+export type MagicLinkResult = {
+  session?: Session;
+  message?: string;
+  error?: string;
+  sent?: boolean;
+  mock?: boolean;
+  demo?: boolean;
+};
+
+export async function sendMagicLink(email: string): Promise<MagicLinkResult> {
   return request("/auth/magic-link", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+export async function sendCoachSession(email: string, coachKey: string): Promise<MagicLinkResult> {
+  return request("/auth/coach-session", {
+    method: "POST",
+    headers: { "X-Coach-Key": coachKey },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function demoCoachKey(): string {
+  return (process.env.EXPO_PUBLIC_DEMO_COACH_KEY ?? extra.demoCoachKey ?? "").trim();
 }
 
 export async function fetchMe(token: string): Promise<MePayload> {

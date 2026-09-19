@@ -30,9 +30,9 @@ describe("POST /coach/assign-from-intake", () => {
       assert.match(body.program.notes, /Skeleton 6-week block/);
       assert.equal(body.program.title, "Seth — 6 weeks");
 
-      const memberLogin = await app.request("/auth/magic-link", {
+      const memberLogin = await app.request("/auth/coach-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
         body: JSON.stringify({ email: "seth@ajaxgym.com" }),
       });
       const token = (await memberLogin.json()).session.accessToken as string;
@@ -73,6 +73,6 @@ describe("POST /coach/assign-from-intake", () => {
     const reason = magicLinkVerifySkipReason(502, { error: "otp_failed", message: "Could not send the magic link." });
     assert.ok(reason);
     assert.match(reason, /otp_failed/);
-    assert.match(reason, /optional/);
+    assert.match(reason, /coach-session/);
   });
 });

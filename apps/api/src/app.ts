@@ -19,6 +19,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { resolveCorsOrigin } from "./cors.js";
 import { runtimeMode } from "./env.js";
+import { magicLinkOtpFailure } from "./magic-link-otp.js";
 import { memoryRepo, type AjaxRepo } from "./repo.js";
 
 export function createApp(store: AjaxRepo = memoryRepo()) {
@@ -139,7 +140,9 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
         body: JSON.stringify({ email, create_user: true }),
       });
       if (!response.ok) {
-        return c.json({ error: "otp_failed", message: "Could not send the magic link." }, 502);
+        const otpBody = await response.json().catch(() => ({}));
+        const failure = magicLinkOtpFailure(response.status, otpBody);
+        return c.json({ error: failure.error, message: failure.message }, failure.status);
       }
       return c.json({ sent: true, message: "Check your email for the Ajax sign-in link." });
     }
@@ -159,6 +162,40 @@ export function createApp(store: AjaxRepo = memoryRepo()) {
             sent: false,
             error: "not_on_roster",
             message: "This email is not on the Ajax member list yet. Ask the front desk to add you.",
+          },
+          403,
+        );
+      }
+      throw err;
+    }
+  });
+
+  app.post("/auth/coach-session", async (c) => {
+    await requireCoach(c);
+    const body = await c.req.json<{ email?: string }>().catch(() => ({ email: "" }));
+    const email = body.email ?? "";
+    if (!email.includes("@")) {
+      return c.json({ error: "invalid_email", message: "Enter a valid roster email." }, 400);
+    }
+    try {
+      const session = await store.issueSession(email);
+      return c.json({
+        sent: true,
+        mock: false,
+        demo: true,
+        message: "Demo session minted. No email was sent.",
+        session,
+      });
+    } catch (err) {
+      if (err instanceof AjaxStoreError && (err.code === "not_on_roster" || err.code === "inactive_roster")) {
+        return c.json(
+          {
+            sent: false,
+            error: err.code,
+            message:
+              err.code === "inactive_roster"
+                ? "This membership is not active."
+                : "This email is not on the Ajax member list yet.",
           },
           403,
         );

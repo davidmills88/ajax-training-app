@@ -35,7 +35,7 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 ## What M0 is
 
 - **Monorepo:** `apps/mobile` (Expo / TypeScript, iOS-first), `apps/api` (Hono / TypeScript), `packages/shared` (onboarding + roster domain), `supabase/` (Postgres schema with `tenant_id` + RLS).
-- **Auth:** magic-link path. Supabase Auth is used when `SUPABASE_URL` + keys are present. Without credentials the API issues a mock session so the app still runs. Apple Sign-In is stubbed (button visible, not implemented).
+- **Auth:** magic-link path. Supabase Auth is used when `SUPABASE_URL` + keys are present. Without credentials the API issues a mock session so the app still runs. Live OTP can be rate-limited; a coach can mint `POST /auth/coach-session` with `X-Coach-Key` (no email). Apple Sign-In is stubbed (button visible, not implemented).
 - **Roster:** manual Ajax member list. No Wellyx gate in M0. Seeded emails: `david@ajaxgym.com`, `seth@ajaxgym.com`, `member@ajax.local`.
 - **Onboarding:** all 9 Client Onboarding Prompt sections, one at a time, recap + confirm, then a member-editable Client Summary.
 - **Consent:** account/privacy questionnaire only. Health-data and SMS consent are later.
@@ -167,12 +167,13 @@ curl -s http://localhost:8787/coach/blocks/PROGRAM_ID/assign \
 
 If `COACH_API_KEY` is set on the API, Pace / Dave can skip the owner session and send the same bodies with `X-Coach-Key: $COACH_API_KEY`. After Client Summary, Dave should call `POST /coach/assign-from-intake` (intake JSON + roster email) instead of the two-step create + assign. See [docs/dave-assign-handoff.md](docs/dave-assign-handoff.md).
 
-Member (auth-gated):
+Member (auth-gated). Mock magic-link returns a session; live OTP does not — mint with `/auth/coach-session` instead (see [docs/go-live.md](docs/go-live.md#7-demo-the-app-no-email-otp)).
 
 ```bash
 MEMBER=$(curl -s http://localhost:8787/auth/magic-link \
   -H 'Content-Type: application/json' \
   -d '{"email":"member@ajax.local"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['session']['accessToken'])")
+# Live: curl "$AJAX_API_URL/auth/coach-session" -H "X-Coach-Key: $COACH_API_KEY" -d '{"email":"member@ajax.local"}'
 
 curl -s http://localhost:8787/training \
   -H "Authorization: Bearer $MEMBER"
