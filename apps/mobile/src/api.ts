@@ -7,10 +7,15 @@ import {
   recapSection,
   type ClientSummary,
   type ConsentQuestionnaire,
+  type CreateBlockInput,
+  type LogWorkoutInput,
   type MePayload,
   type OnboardingAnswers,
   type OnboardingProfile,
   type Session,
+  type TrainingHome,
+  type WorkoutDetail,
+  type WorkoutLog,
 } from "@ajax/shared";
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787").replace(/\/$/, "");
@@ -117,6 +122,31 @@ async function localHandle<T>(path: string, init: RequestInit, token?: string | 
     const profile = local.completeOnboarding(user);
     return { profile, me: local.getMe(user) } as T;
   }
+  if ((path === "/training" || path === "/training/workouts") && method === "GET") {
+    return local.getTrainingHome(user) as T;
+  }
+  const workoutMatch = path.match(/^\/training\/workouts\/([^/]+)$/);
+  if (workoutMatch && method === "GET") {
+    return local.getWorkoutDetail(user, decodeURIComponent(workoutMatch[1])) as T;
+  }
+  const logMatch = path.match(/^\/training\/workouts\/([^/]+)\/log$/);
+  if (logMatch && method === "POST") {
+    const log = local.logWorkout(user, decodeURIComponent(logMatch[1]), body as LogWorkoutInput);
+    return { log, workout: local.getWorkoutDetail(user, decodeURIComponent(logMatch[1])) } as T;
+  }
+  if (path === "/coach/blocks" && method === "GET") {
+    return { blocks: local.listBlocks(user) } as T;
+  }
+  if (path === "/coach/blocks" && method === "POST") {
+    const program = local.createBlock(user, body as CreateBlockInput);
+    const detail = local.getBlock(user, program.id);
+    return { program: detail.program, workouts: detail.workouts } as T;
+  }
+  const assignMatch = path.match(/^\/coach\/blocks\/([^/]+)\/assign$/);
+  if (assignMatch && method === "POST") {
+    const assignment = local.assignBlock(user, decodeURIComponent(assignMatch[1]), String(body.email ?? ""));
+    return { assignment } as T;
+  }
   throw new AjaxStoreError("not_found", `Unknown local path ${method} ${path}`);
 }
 
@@ -150,6 +180,22 @@ export async function saveSummary(token: string, summary: ClientSummary) {
 
 export async function completeOnboarding(token: string) {
   return request<{ me: MePayload }>("/onboarding/complete", { method: "POST" }, token);
+}
+
+export async function fetchTraining(token: string): Promise<TrainingHome> {
+  return request("/training", {}, token);
+}
+
+export async function fetchWorkout(token: string, workoutId: string): Promise<WorkoutDetail> {
+  return request(`/training/workouts/${encodeURIComponent(workoutId)}`, {}, token);
+}
+
+export async function logWorkoutResult(token: string, workoutId: string, input: LogWorkoutInput) {
+  return request<{ log: WorkoutLog; workout: WorkoutDetail }>(
+    `/training/workouts/${encodeURIComponent(workoutId)}/log`,
+    { method: "POST", body: JSON.stringify(input) },
+    token,
+  );
 }
 
 export { CONSENT_COPY, emptyConsentQuestionnaire, ONBOARDING_SECTIONS };

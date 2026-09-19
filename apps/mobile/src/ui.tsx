@@ -39,7 +39,7 @@ export function Muted({ children }: { children: ReactNode }) {
 }
 
 export function FieldLabel({ children }: { children: ReactNode }) {
-  return <Text style={styles.label}>{children}</Text>;
+  return <Text style={preserveSpaces(styles.label)}>{children}</Text>;
 }
 
 export function Input(props: TextInputProps) {
@@ -93,6 +93,28 @@ export function Chip({
   return (
     <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>
       <Text style={[styles.chipLabel, selected && styles.chipLabelSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function ListRow({
+  title,
+  meta,
+  done,
+  onPress,
+}: {
+  title: string;
+  meta: string;
+  done?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={[styles.row, done && styles.rowDone]}>
+      <View style={{ flex: 1 }}>
+        <Text style={preserveSpaces(styles.rowTitle)}>{title}</Text>
+        <Text style={preserveSpaces(styles.rowMeta)}>{meta}</Text>
+      </View>
+      <Text style={preserveSpaces(styles.rowMark)}>{done ? "Done" : "Open"}</Text>
     </Pressable>
   );
 }
@@ -163,6 +185,20 @@ const styles = StyleSheet.create({
   chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipLabel: { color: colors.text, fontSize: 14 },
   chipLabelSelected: { color: colors.bg, fontWeight: "700" },
+  row: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  rowDone: { borderColor: colors.accentDim },
+  rowTitle: { color: colors.text, fontSize: 16, fontWeight: "600" },
+  rowMeta: { color: colors.muted, fontSize: 13, marginTop: 4 },
+  rowMark: { color: colors.accent, fontSize: 13, fontWeight: "600" },
   banner: {
     backgroundColor: colors.surfaceRaised,
     borderRadius: 12,

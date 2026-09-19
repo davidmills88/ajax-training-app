@@ -412,6 +412,22 @@ function optionLabel(section: OnboardingSectionDef, key: string, raw: string): s
     .join(", ");
 }
 
+export function filledDemoSection(id: OnboardingSectionId): OnboardingAnswers {
+  const section = sectionById(id);
+  const answers: OnboardingAnswers = {};
+  for (const field of section.fields) {
+    if (field.type === "number" || field.type === "scale") answers[field.key] = field.min ?? 3;
+    else if (field.type === "multiselect") answers[field.key] = [field.options?.[0]?.value ?? "x"];
+    else if (field.type === "select") answers[field.key] = field.options?.[0]?.value ?? "x";
+    else answers[field.key] = field.key === "fullName" ? "Demo Member" : `demo-${field.key}`;
+  }
+  if (id === 2) {
+    answers.goal1 = "Ski-season durability";
+    answers.whyImportant = "Stay on snow without blowing up.";
+  }
+  return answers;
+}
+
 export function validateSectionAnswers(id: OnboardingSectionId, answers: OnboardingAnswers): string[] {
   const section = sectionById(id);
   const errors: string[] = [];

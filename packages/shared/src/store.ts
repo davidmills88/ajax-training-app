@@ -1,10 +1,26 @@
-import { validateConsent } from "./consent.js";
+import { emptyConsentQuestionnaire, validateConsent } from "./consent.js";
 import {
   buildClientSummary,
   emptyClientSummary,
+  filledDemoSection,
   isOnboardingSectionId,
   validateSectionAnswers,
 } from "./onboarding.js";
+import {
+  DEMO_BLOCK,
+  DEMO_MEMBER_EMAIL,
+  isCoachRole,
+  validateCreateBlock,
+  type CreateBlockInput,
+  type LogWorkoutInput,
+  type Program,
+  type ProgramAssignment,
+  type TrainingHome,
+  type Workout,
+  type WorkoutDetail,
+  type WorkoutLog,
+  type WorkoutSegment,
+} from "./training.js";
 import {
   AJAX_TENANT_ID,
   TENANT_SLUG_AJAX,
@@ -29,7 +45,10 @@ export type AjaxStoreErrorCode =
   | "section_incomplete"
   | "confirm_out_of_order"
   | "not_found"
-  | "unauthorized";
+  | "unauthorized"
+  | "forbidden"
+  | "invalid_block"
+  | "invalid_log";
 
 export class AjaxStoreError extends Error {
   constructor(
@@ -76,11 +95,16 @@ export class InMemoryAjaxStore {
   private usersByEmail = new Map<string, string>();
   private consents = new Map<string, ConsentRecord>();
   private onboarding = new Map<string, OnboardingProfile>();
+  private programs = new Map<string, Program>();
+  private workouts = new Map<string, Workout>();
+  private assignments = new Map<string, ProgramAssignment>();
+  private logs = new Map<string, WorkoutLog>();
 
   constructor(seed: Omit<RosterEntry, "id" | "tenantId">[] = DEFAULT_AJAX_ROSTER) {
     for (const row of seed) {
       this.addRoster(row.email, row.fullName, row.status);
     }
+    this.seedDemoBlock();
   }
 
   addRoster(email: string, fullName: string, status: RosterEntry["status"] = "active"): RosterEntry {
@@ -277,6 +301,210 @@ export class InMemoryAjaxStore {
     profile.updatedAt = nowIso();
     return profile;
   }
+
+  createBlock(actor: SessionUser, input: CreateBlockInput): Program {
+    this.assertCoach(actor);
+    const errors = validateCreateBlock(input);
+    if (errors.length) throw new AjaxStoreError("invalid_block", errors.join(" "));
+    const durationWeeks = input.durationWeeks ?? 6;
+    const program: Program = {
+      id: id("prg"),
+      tenantId: this.tenantId,
+      title: input.title.trim(),
+      notes: input.notes?.trim() ?? "",
+      durationWeeks,
+      createdAt: nowIso(),
+    };
+    this.programs.set(program.id, program);
+    input.workouts.forEach((row, index) => {
+      const workout: Workout = {
+        id: id("wko"),
+        tenantId: this.tenantId,
+        programId: program.id,
+        week: row.week,
+        day: row.day,
+        sortOrder: row.sortOrder ?? index,
+        title: row.title.trim(),
+        notes: row.notes?.trim() ?? "",
+        videoUrl: row.videoUrl?.trim() || null,
+        segments: normalizeSegments(row.segments),
+      };
+      this.workouts.set(workout.id, workout);
+    });
+    return program;
+  }
+
+  assignBlock(actor: SessionUser, programId: string, email: string): ProgramAssignment {
+    this.assertCoach(actor);
+    const program = this.programs.get(programId);
+    if (!program) throw new AjaxStoreError("not_found", "That block does not exist.");
+    const roster = this.findRoster(email);
+    if (!roster) throw new AjaxStoreError("not_on_roster", "This email is not on the Ajax member list yet.");
+    if (roster.status !== "active") {
+      throw new AjaxStoreError("inactive_roster", "This membership is not active.");
+    }
+    const memberEmail = roster.email;
+    for (const row of this.assignments.values()) {
+      if (row.memberEmail === memberEmail && row.status === "active") {
+        row.status = "inactive";
+      }
+    }
+    const userId = this.usersByEmail.get(memberEmail) ?? null;
+    const assignment: ProgramAssignment = {
+      id: id("asg"),
+      tenantId: this.tenantId,
+      programId: program.id,
+      memberEmail,
+      userId,
+      status: "active",
+      assignedAt: nowIso(),
+    };
+    this.assignments.set(assignment.id, assignment);
+    return assignment;
+  }
+
+  listBlocks(actor: SessionUser): Program[] {
+    this.assertCoach(actor);
+    return [...this.programs.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  getBlock(actor: SessionUser, programId: string): { program: Program; workouts: Workout[]; assignments: ProgramAssignment[] } {
+    this.assertCoach(actor);
+    const program = this.programs.get(programId);
+    if (!program) throw new AjaxStoreError("not_found", "That block does not exist.");
+    return {
+      program,
+      workouts: this.workoutsForProgram(program.id),
+      assignments: [...this.assignments.values()].filter((row) => row.programId === program.id),
+    };
+  }
+
+  getTrainingHome(user: SessionUser): TrainingHome {
+    const assignment = this.activeAssignmentFor(user.email);
+    if (!assignment) return { assignment: null, program: null, workouts: [] };
+    this.touchAssignmentUser(assignment, user);
+    const program = this.programs.get(assignment.programId) ?? null;
+    const workouts = this.workoutsForProgram(assignment.programId).map((workout) => ({
+      ...workout,
+      log: this.findLog(user.id, workout.id, assignment.id),
+    }));
+    return { assignment, program, workouts };
+  }
+
+  getWorkoutDetail(user: SessionUser, workoutId: string): WorkoutDetail {
+    const home = this.getTrainingHome(user);
+    if (!home.assignment || !home.program) {
+      throw new AjaxStoreError("not_found", "No block is assigned yet.");
+    }
+    const workout = home.workouts.find((row) => row.id === workoutId);
+    if (!workout) throw new AjaxStoreError("not_found", "That workout is not on your current block.");
+    return {
+      assignment: home.assignment,
+      program: home.program,
+      workout,
+      log: workout.log,
+    };
+  }
+
+  logWorkout(user: SessionUser, workoutId: string, input: LogWorkoutInput): WorkoutLog {
+    const detail = this.getWorkoutDetail(user, workoutId);
+    const existing = detail.log;
+    const record: WorkoutLog = {
+      id: existing?.id ?? id("log"),
+      tenantId: user.tenantId,
+      userId: user.id,
+      workoutId,
+      assignmentId: detail.assignment.id,
+      weight: normalizeMetric(input.weight, existing?.weight ?? null),
+      reps: normalizeMetric(input.reps, existing?.reps ?? null),
+      score: normalizeMetric(input.score, existing?.score ?? null),
+      notes: input.notes !== undefined ? String(input.notes) : existing?.notes ?? "",
+      completedAt: existing?.completedAt ?? null,
+      createdAt: existing?.createdAt ?? nowIso(),
+    };
+    if (input.completed === true) record.completedAt = nowIso();
+    if (input.completed === false) record.completedAt = null;
+    this.logs.set(logKey(user.id, workoutId, detail.assignment.id), record);
+    return record;
+  }
+
+  private assertCoach(actor: SessionUser) {
+    if (!isCoachRole(actor.role)) {
+      throw new AjaxStoreError("forbidden", "Only a coach or owner can create and assign blocks.");
+    }
+  }
+
+  private seedDemoBlock() {
+    const owner: SessionUser = {
+      id: "usr_seed_owner",
+      tenantId: this.tenantId,
+      email: "david@ajaxgym.com",
+      fullName: "David Mills",
+      role: "owner",
+    };
+    const program = this.createBlock(owner, DEMO_BLOCK);
+    this.assignBlock(owner, program.id, DEMO_MEMBER_EMAIL);
+    const member = this.issueSession(DEMO_MEMBER_EMAIL).user;
+    this.saveConsent(member, {
+      ...emptyConsentQuestionnaire(),
+      isAdult: true,
+      understandProfileStorage: true,
+      acceptTerms: true,
+      understandLaterConsents: true,
+      hearAboutUs: "Seeded demo",
+    });
+    for (let section = 1; section <= 9; section += 1) {
+      this.saveSection(member, section, filledDemoSection(section as OnboardingSectionId));
+      this.confirmSection(member, section);
+    }
+    this.completeOnboarding(member);
+  }
+
+  private activeAssignmentFor(email: string): ProgramAssignment | undefined {
+    const normalized = normalizeEmail(email);
+    return [...this.assignments.values()]
+      .filter((row) => row.memberEmail === normalized && row.status === "active")
+      .sort((a, b) => b.assignedAt.localeCompare(a.assignedAt))[0];
+  }
+
+  private touchAssignmentUser(assignment: ProgramAssignment, user: SessionUser) {
+    if (assignment.userId !== user.id) {
+      assignment.userId = user.id;
+    }
+  }
+
+  private workoutsForProgram(programId: string): Workout[] {
+    return [...this.workouts.values()]
+      .filter((row) => row.programId === programId)
+      .sort((a, b) => a.week - b.week || a.day - b.day || a.sortOrder - b.sortOrder);
+  }
+
+  private findLog(userId: string, workoutId: string, assignmentId: string): WorkoutLog | null {
+    return this.logs.get(logKey(userId, workoutId, assignmentId)) ?? null;
+  }
+}
+
+function normalizeSegments(segments: WorkoutSegment[] | undefined): WorkoutSegment[] {
+  if (!Array.isArray(segments)) return [];
+  return segments
+    .filter((row) => row?.name?.trim())
+    .map((row) => ({
+      name: row.name.trim(),
+      prescription: row.prescription?.trim() || undefined,
+      notes: row.notes?.trim() || undefined,
+      videoUrl: row.videoUrl?.trim() || null,
+    }));
+}
+
+function normalizeMetric(value: string | null | undefined, fallback: string | null): string | null {
+  if (value === undefined) return fallback;
+  if (value === null) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function logKey(userId: string, workoutId: string, assignmentId: string): string {
+  return `${userId}:${workoutId}:${assignmentId}`;
 }
 
 export function nextUnconfirmed(profile: OnboardingProfile): OnboardingSectionId {

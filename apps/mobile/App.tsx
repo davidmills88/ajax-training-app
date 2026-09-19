@@ -101,7 +101,7 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" />
-      <HomeScreen me={me} onSignOut={() => void hydrate(null)} />
+      <HomeScreen token={token} me={me} onSignOut={() => void hydrate(null)} />
     </>
   );
 }
