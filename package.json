@@ -12,7 +12,8 @@
     "dev:web": "npm run web -w @ajax/mobile",
     "test": "npm test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "assign:day8": "bash scripts/assign-day8-block.sh"
+    "assign:day8": "bash scripts/assign-day8-block.sh",
+    "assign:from-intake": "bash scripts/assign-from-intake.sh"
   },
   "engines": {
     "node": ">=20"
