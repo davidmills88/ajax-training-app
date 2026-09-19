@@ -1,6 +1,9 @@
 -- Ajax Training M1 — assigned blocks, workouts, result logs
 -- Apply after 0001_init.sql:
 --   psql "$DATABASE_URL" -f supabase/migrations/0002_training.sql
+--
+-- Safe to re-run: create table/index if not exists, create or replace
+-- function, drop policy if exists then create policy. Does not truncate data.
 
 create table if not exists public.programs (
   id uuid primary key default gen_random_uuid(),

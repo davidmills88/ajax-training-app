@@ -10,7 +10,9 @@ M0 stack (locked working baseline): Expo (React Native) iOS-first · Hono API ·
 
 M0 on main: auth, manual Ajax roster, account/privacy consent, and the full 9-section onboarding → Client Summary.
 
-M1 (this tree): an assigned 6-week block, workout detail with optional video, and a simple result log — the thinnest loop so Ajax can deliver a Day-8 custom program.
+M1 on main: an assigned 6-week block, workout detail with optional video, and a simple result log — the thinnest loop so Ajax can deliver a Day-8 custom program.
+
+M1.1 (this tree): EAS / Expo placeholders for a later TestFlight, live-Supabase docs + a Day-8 fixture the coach API can ingest. No Apple secrets. No required cloud build.
 
 ## Ownership & intended orgs
 
@@ -22,7 +24,7 @@ Lily (COS) owns end-to-end product and architecture decisions for this app. Davi
 | Supabase (Auth + Postgres) | Same Ajax Fitness owner account | Preferred live path. **Not required for M0.** Leave env blank and use the in-memory mock. |
 | API host | Vercel or Fly, same owner | Documented target. Local `npm run dev:api` is enough for M0. |
 | Apple Developer | `david@ajaxgym.com` | Planned for TestFlight / Sign in with Apple. **Do not block M0** on creating the team. Apple Sign-In stays stubbed. |
-| Expo / EAS | `david@ajaxgym.com` Expo account | Planned for iOS builds. **Do not block M0** on creating it. Expo Go / web + mock auth is the default. |
+| Expo / EAS | `david@ajaxgym.com` Expo account | Placeholders in `apps/mobile` (`com.ajaxgym.training`, `eas.json` `preview`). **Do not block** on creating the account. Expo Go / web + mock auth is the default. |
 
 No live credentials belong in this repo. `.env.example` files use labeled placeholders only; copy to `.env` locally when a project exists. See [docs/supabase-setup.md](docs/supabase-setup.md).
 
@@ -43,6 +45,13 @@ No live credentials belong in this repo. `.env.example` files use labeled placeh
 - **Result log:** weight, reps, score, notes, and mark complete. One log per workout per assignment.
 - **Seed:** `member@ajax.local` already has the demo “Ajax Foundation — 6 weeks” block. In mock mode that member is also marked onboarding-complete so home is immediate.
 - **Coach API:** `POST /coach/blocks` + `POST /coach/blocks/:id/assign`. Owner session (`david@ajaxgym.com`) or `X-Coach-Key` when `COACH_API_KEY` is set.
+- **Day-8 fixture:** `fixtures/day-8-foundation-6-week.json` (18 sessions, 3×/week). Print or run the curl flow with `npm run assign:day8`.
+
+## What M1.1 is
+
+- **EAS prep:** `apps/mobile/eas.json` (`preview` / `development` / `production`) and Ajax bundle id `com.ajaxgym.training`. Docs for `eas login` + `eas build -p ios --profile preview`. No credentials, no required cloud build.
+- **Live Supabase docs:** [docs/m1-live-supabase.md](docs/m1-live-supabase.md) — apply migrations, seed, env vars for API + mobile.
+- **Assign script:** `npm run assign:day8` prints (or `--run` posts) the coach create+assign curl flow against a base URL.
 
 ## What M0 / M1 are not
 
@@ -154,14 +163,43 @@ curl -s http://localhost:8787/training/workouts/WORKOUT_ID/log \
   -d '{"weight":"32","reps":"8,8,8","score":"7/10","notes":"Quiet depth.","completed":true}'
 ```
 
-Live path: apply `supabase/migrations/0002_training.sql` then `supabase/seed.sql` (see [docs/supabase-setup.md](docs/supabase-setup.md)). The API uses Postgres when `DATABASE_URL` is reachable; otherwise it stays on the in-memory mock, including the seeded demo assignment.
+Live path: apply `0001_init.sql`, `0002_training.sql`, then `seed.sql`. Step-by-step env map: [docs/m1-live-supabase.md](docs/m1-live-supabase.md) and [docs/supabase-setup.md](docs/supabase-setup.md). The API uses Postgres when `DATABASE_URL` is reachable; otherwise it stays on the in-memory mock, including the seeded demo assignment.
+
+Print the same create+assign flow (or run it against a base URL):
+
+```bash
+npm run assign:day8
+npm run assign:day8 -- --run --email member@ajax.local
+```
+
+## EAS / TestFlight (preview)
+
+No Apple or Expo credentials live in this repo. `apps/mobile/eas.json` and `app.json` use Ajax placeholders (`com.ajaxgym.training`). A successful cloud build is **not** required for this milestone.
+
+Once the `david@ajaxgym.com` Expo account and Apple Developer team exist:
+
+```bash
+cd apps/mobile
+npm run eas:login
+# or: npx eas-cli login
+
+npx eas-cli init          # writes extra.eas.projectId — do not commit secrets
+npm run eas:build:ios:preview
+# or: npx eas-cli build -p ios --profile preview
+```
+
+`preview` is internal distribution. EAS will prompt for the Apple team on the human machine. Do not paste `.p8` / `.p12` / `credentials.json` into git.
+
+Until then: Expo Go / `npm run dev:web` + the mock API.
 
 ## Repo map
 
 ```
 apps/api          Hono server — health, magic-link, roster, consent, onboarding, coach blocks, training logs
-apps/mobile       Expo app — login → consent → 9 sections → summary → assigned block
+apps/mobile       Expo app — login → consent → 9 sections → summary → assigned block (`eas.json` preview)
 packages/shared   Onboarding, training types, in-memory store + demo seed
+fixtures/         Day-8 Foundation 6-week JSON for POST /coach/blocks
+scripts/          Print/run coach create+assign (`assign-day8-block.sh`)
 supabase/         Postgres + RLS for tenants, roster, programs, workouts, assignments, logs
 ```
 

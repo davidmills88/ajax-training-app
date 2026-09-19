@@ -1,7 +1,18 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { emptyConsentQuestionnaire, ONBOARDING_SECTIONS } from "@ajax/shared";
 import { createApp } from "../src/app.js";
+
+const day8Fixture = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures/day-8-foundation-6-week.json"), "utf8"),
+) as {
+  title: string;
+  durationWeeks: number;
+  workouts: { week: number; day: number; title: string; videoUrl?: string | null }[];
+};
 
 function filledSection(id: number) {
   const section = ONBOARDING_SECTIONS.find((s) => s.id === id)!;
@@ -186,6 +197,92 @@ describe("ajax api", () => {
       body: JSON.stringify({ title: "Nope", workouts: [{ week: 1, day: 1, title: "x" }] }),
     });
     assert.equal(forbidden.status, 403);
+  });
+
+  it("ingests the Day 8 Foundation fixture and assigns it over the mock fallback", async () => {
+    const app = createApp();
+    assert.equal((await (await app.request("/health")).json()).mode, "mock");
+
+    const coachLogin = await app.request("/auth/magic-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "david@ajaxgym.com" }),
+    });
+    const coachToken = (await coachLogin.json()).session.accessToken as string;
+    const coachAuth = { Authorization: `Bearer ${coachToken}`, "Content-Type": "application/json" };
+
+    const created = await app.request("/coach/blocks", {
+      method: "POST",
+      headers: coachAuth,
+      body: JSON.stringify(day8Fixture),
+    });
+    assert.equal(created.status, 201);
+    const createdBody = await created.json();
+    assert.equal(createdBody.program.title, "Day 8 Foundation — 6 weeks");
+    assert.equal(createdBody.program.durationWeeks, 6);
+    assert.equal(createdBody.workouts.length, 18);
+    assert.equal(createdBody.workouts.filter((row: { day: number }) => row.day === 1).length, 6);
+    assert.equal(createdBody.workouts.filter((row: { day: number }) => row.day === 3).length, 6);
+    assert.equal(createdBody.workouts.filter((row: { day: number }) => row.day === 5).length, 6);
+    assert.ok(createdBody.workouts.some((row: { videoUrl?: string | null }) => row.videoUrl));
+
+    const assigned = await app.request(`/coach/blocks/${createdBody.program.id}/assign`, {
+      method: "POST",
+      headers: coachAuth,
+      body: JSON.stringify({ email: "member@ajax.local" }),
+    });
+    assert.equal(assigned.status, 200);
+
+    const memberLogin = await app.request("/auth/magic-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "member@ajax.local" }),
+    });
+    const memberToken = (await memberLogin.json()).session.accessToken as string;
+    const home = await app.request("/training", { headers: { Authorization: `Bearer ${memberToken}` } });
+    assert.equal(home.status, 200);
+    const homeBody = await home.json();
+    assert.equal(homeBody.program.title, "Day 8 Foundation — 6 weeks");
+    assert.equal(homeBody.workouts.length, 18);
+    assert.equal(homeBody.assignment.status, "active");
+  });
+
+  it("lets Pace create and assign the Day 8 fixture with X-Coach-Key", async () => {
+    const previous = process.env.COACH_API_KEY;
+    process.env.COACH_API_KEY = "test-coach-key";
+    try {
+      const app = createApp();
+      const created = await app.request("/coach/blocks", {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify(day8Fixture),
+      });
+      assert.equal(created.status, 201);
+      const programId = (await created.json()).program.id as string;
+
+      const assigned = await app.request(`/coach/blocks/${programId}/assign`, {
+        method: "POST",
+        headers: { "X-Coach-Key": "test-coach-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "seth@ajaxgym.com" }),
+      });
+      assert.equal(assigned.status, 200);
+      const assignedBody = await assigned.json();
+      assert.equal(assignedBody.assignment.memberEmail, "seth@ajaxgym.com");
+
+      const memberLogin = await app.request("/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "seth@ajaxgym.com" }),
+      });
+      const token = (await memberLogin.json()).session.accessToken as string;
+      const home = await app.request("/training", { headers: { Authorization: `Bearer ${token}` } });
+      const homeBody = await home.json();
+      assert.equal(homeBody.program.title, "Day 8 Foundation — 6 weeks");
+      assert.equal(homeBody.workouts.length, 18);
+    } finally {
+      if (previous === undefined) delete process.env.COACH_API_KEY;
+      else process.env.COACH_API_KEY = previous;
+    }
   });
 
   it("seeds a demo assignment for member@ajax.local", async () => {

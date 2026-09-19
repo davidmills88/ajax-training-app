@@ -52,3 +52,5 @@ There is no Next.js app in this monorepo. If one is added later, use `NEXT_PUBLI
 Enable email magic links in Supabase Auth. Apple Sign-In stays stubbed until the `david@ajaxgym.com` Apple Developer team exists.
 
 If `DATABASE_URL` is set but Postgres is unreachable, the API logs a warning and stays on the in-memory mock.
+
+M1 training tables, env table, and the Day-8 assign script: [m1-live-supabase.md](./m1-live-supabase.md).

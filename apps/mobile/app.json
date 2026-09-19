@@ -9,10 +9,10 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ajaxfitness.training"
+      "bundleIdentifier": "com.ajaxgym.training"
     },
     "android": {
-      "package": "com.ajaxfitness.training"
+      "package": "com.ajaxgym.training"
     },
     "web": {
       "bundler": "metro",
@@ -20,9 +20,7 @@
     },
     "plugins": [],
     "extra": {
-      "eas": {
-        "projectId": "replace-when-eas-is-configured"
-      }
+      "eas": {}
     }
   }
 }

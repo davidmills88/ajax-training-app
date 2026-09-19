@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
-import { buildClientSummary, emptyConsentQuestionnaire, ONBOARDING_SECTIONS } from "../src/index.js";
+import { fileURLToPath } from "node:url";
+import {
+  buildClientSummary,
+  emptyConsentQuestionnaire,
+  ONBOARDING_SECTIONS,
+  validateCreateBlock,
+  type CreateBlockInput,
+} from "../src/index.js";
 import { AjaxStoreError, InMemoryAjaxStore } from "../src/store.js";
+
+const day8Fixture = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures/day-8-foundation-6-week.json"), "utf8"),
+) as CreateBlockInput;
 
 function filledSection(id: number) {
   const section = ONBOARDING_SECTIONS.find((s) => s.id === id)!;
@@ -84,6 +97,24 @@ describe("InMemoryAjaxStore", () => {
     assert.equal(log.weight, "28");
     assert.ok(log.completedAt);
     assert.equal(store.getWorkoutDetail(member, first.id).log?.notes, "Left hip a little tight.");
+  });
+
+  it("accepts the Day 8 Foundation fixture as a create-block payload", () => {
+    assert.deepEqual(validateCreateBlock(day8Fixture), []);
+    assert.equal(day8Fixture.durationWeeks, 6);
+    assert.equal(day8Fixture.workouts.length, 18);
+    const days = new Set(day8Fixture.workouts.map((row) => row.day));
+    assert.deepEqual([...days].sort(), [1, 3, 5]);
+    assert.ok(day8Fixture.workouts.some((row) => row.videoUrl));
+
+    const store = new InMemoryAjaxStore();
+    const coach = store.issueSession("david@ajaxgym.com").user;
+    const program = store.createBlock(coach, day8Fixture);
+    const assignment = store.assignBlock(coach, program.id, "member@ajax.local");
+    const home = store.getTrainingHome(store.issueSession("member@ajax.local").user);
+    assert.equal(home.program?.title, "Day 8 Foundation — 6 weeks");
+    assert.equal(home.workouts.length, 18);
+    assert.equal(assignment.status, "active");
   });
 
   it("builds a client summary from the nine sections", () => {
