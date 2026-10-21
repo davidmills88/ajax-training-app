@@ -20,10 +20,11 @@ On live `ajax-training-app` this is **already done** (ops box). For a new databa
 # SQL editor in the dashboard, or:
 psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
 psql "$DATABASE_URL" -f supabase/migrations/0002_training.sql
+psql "$DATABASE_URL" -f supabase/migrations/0003_explicit_grants.sql
 psql "$DATABASE_URL" -f supabase/seed.sql
 ```
 
-`0001_init.sql` creates tenants, roster, users, consents, onboarding, and RLS. `0002_training.sql` adds programs (blocks), workouts, assignments, workout_logs, and RLS. `seed.sql` adds the Ajax roster (`david@ajaxgym.com`, `seth@ajaxgym.com`, `member@ajax.local`, `playwright@ajax.local`) and assigns the demo 6-week block to `member@ajax.local`.
+`0001_init.sql` creates tenants, roster, users, consents, onboarding, and RLS. `0002_training.sql` adds programs (blocks), workouts, assignments, workout_logs, and RLS. `0003_explicit_grants.sql` grants Data API access to `authenticated` / `service_role` explicitly (Supabase stops auto-granting on new `public` tables from 2026-10-30); every new table migration must enable RLS and add the same grants. `seed.sql` adds the Ajax roster (`david@ajaxgym.com`, `seth@ajaxgym.com`, `member@ajax.local`, `playwright@ajax.local`) and assigns the demo 6-week block to `member@ajax.local`.
 
 On the live `ajax-training-app` project, M0 tables plus `0002_training.sql` and `seed.sql` are **already applied** (ops box env — not from secrets in this repo). Re-run only for a fresh database; the SQL is idempotent.
 
